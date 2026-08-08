@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h3 class="card-title mb-4 text-center"><i class="bi bi-person-plus"></i> Student Registration</h3>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ field.label }}</label>
+            <input type="{{ field.field.widget.input_type }}" name="{{ field.html_name }}"
+              class="form-control {% if field.errors %}is-invalid{% endif %}"
+              {% if field.value %}value="{{ field.value }}"{% endif %}
+              {% if field.field.required %}required{% endif %}>
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% for error in field.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-dark w-100 mt-2">Register</button>
+        </form>
+        <hr>
+        <p class="text-center mb-0">Already registered? <a href="{% url 'login' %}">Login here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

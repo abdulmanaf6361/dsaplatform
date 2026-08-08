@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}{{ question.title }}{% endblock %}
+{% block content %}
+<div class="row g-3" style="height: calc(100vh - 120px);">
+
+  <!-- LEFT: Problem Statement -->
+  <div class="col-md-5 d-flex flex-column">
+    <div class="card shadow-sm flex-grow-1 overflow-auto">
+      <div class="card-header bg-dark text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Day {{ question.day.day_number }} &mdash; Q{{ question.order }}</span>
+          <span class="badge
+            {% if question.difficulty == 'easy' %}bg-success
+            {% elif question.difficulty == 'medium' %}bg-warning text-dark
+            {% else %}bg-danger{% endif %}">
+            {{ question.get_difficulty_display }}
+          </span>
+        </div>
+        <h5 class="mb-0 mt-1">{{ question.title }}</h5>
+      </div>
+      <div class="card-body overflow-auto" style="max-height: calc(100vh - 250px);">
+        <h6 class="text-muted text-uppercase small fw-bold">Description</h6>
+        <p>{{ question.description|linebreaks }}</p>
+
+        {% if question.constraints %}
+        <h6 class="text-muted text-uppercase small fw-bold">Constraints</h6>
+        <p class="small">{{ question.constraints }}</p>
+        {% endif %}
+
+        {% if sample_cases %}
+        <h6 class="text-muted text-uppercase small fw-bold mt-3">Examples</h6>
+        {% for tc in sample_cases %}
+        <div class="bg-light rounded p-3 mb-2 small">
+          <div class="mb-1"><span class="fw-bold">Input:</span> <code>{{ tc.input_data }}</code></div>
+          <div><span class="fw-bold">Output:</span><pre class="mb-0 mt-1" style="font-size:13px; background:transparent;">{{ tc.expected_output }}</pre></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="mt-3">
+          <a href="{% url 'my_submissions' question.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-clock-history"></i> My Submissions
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Code Editor -->
+  <div class="col-md-7 d-flex flex-column">
+    <div class="card shadow-sm flex-grow-1 d-flex flex-column">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+        <span><i class="bi bi-code-slash"></i> Python 3</span>
+        <div class="d-flex gap-2 align-items-center">
+          <span id="run-status" class="small text-muted"></span>
+          <button id="run-btn" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-play-fill"></i> Run
+          </button>
+          <button id="submit-btn" class="btn btn-sm btn-success" disabled>
+            <i class="bi bi-send-fill"></i> Submit
+          </button>
+        </div>
+      </div>
+
+      <!-- Read-only signature -->
+      <div class="px-3 pt-2 pb-0" style="background:#1e1e1e;">
+        <pre class="mb-0" style="color:#569cd6; font-family:'Courier New',monospace; font-size:14px; user-select:none;">{{ signature_line }}</pre>
+      </div>
+
+      <!-- Editable body -->
+      <textarea id="code-editor"
+        class="flex-grow-1 p-3"
+        style="background:#1e1e1e; color:#d4d4d4; font-family:'Courier New',monospace;
+               font-size:14px; border:none; outline:none; resize:none;
+               padding-left: 2.5rem !important;"
+        placeholder="# Write your solution here (no need to indent — platform handles it)&#10;return "
+        spellcheck="false"
+      >{% if last_code_body %}{{ last_code_body }}{% endif %}</textarea>
+
+      <!-- Results Panel -->
+      <div id="results-panel" class="border-top" style="background:#1e1e1e; max-height:280px; overflow-y:auto; display:none;">
+        <div class="p-2 d-flex justify-content-between align-items-center" style="background:#252526;">
+          <span id="results-summary" class="small text-white fw-bold"></span>
+          <button class="btn btn-sm btn-link text-muted p-0" onclick="document.getElementById('results-panel').style.display='none'">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div id="results-body" class="p-2"></div>
+      </div>
+    </div>
+
+    <!-- Hidden submit form -->
+    <form id="submit-form" method="post" action="{% url 'submit_code' question.id %}" style="display:none;">
+      {% csrf_token %}
+      <input type="hidden" name="code" id="submit-code-input">
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const QUESTION_ID = {{ question.id }};
+const RUN_URL = "{% url 'run_code' question.id %}";
+const CSRF = "{{ csrf_token }}";
+let hasRun = false;
+
+const editor = document.getElementById('code-editor');
+const runBtn = document.getElementById('run-btn');
+const submitBtn = document.getElementById('submit-btn');
+const runStatus = document.getElementById('run-status');
+const resultsPanel = document.getElementById('results-panel');
+const resultsSummary = document.getElementById('results-summary');
+const resultsBody = document.getElementById('results-body');
+
+// Tab key inserts spaces instead of changing focus
+editor.addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = start + 4;
+  }
+});
+
+runBtn.addEventListener('click', async function() {
+  const code = editor.value.trim();
+  if (!code) {
+    alert('Please write your solution first.');
+    return;
+  }
+
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
+  runStatus.textContent = '';
+  submitBtn.disabled = true;
+  hasRun = false;
+
+  try {
+    const resp = await fetch(RUN_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+      body: JSON.stringify({code: code})
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      runStatus.textContent = data.error;
+      runStatus.className = 'small text-danger';
+      return;
+    }
+
+    renderResults(data);
+    hasRun = true;
+    submitBtn.disabled = false;
+
+    if (data.all_passed) {
+      runStatus.innerHTML = '<span class="text-success">&#10003; All test cases passed — ready to submit!</span>';
+    } else {
+      runStatus.innerHTML = `<span class="text-warning">${data.passed_count}/${data.total_count} passed</span>`;
+    }
+
+  } catch(e) {
+    runStatus.textContent = 'Error connecting to server.';
+    runStatus.className = 'small text-danger';
+  } finally {
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+  }
+});
+
+submitBtn.addEventListener('click', function() {
+  if (!hasRun) {
+    alert('Please run your code first before submitting.');
+    return;
+  }
+  if (!confirm('Submit this solution? This will be recorded as your submission.')) return;
+  document.getElementById('submit-code-input').value = editor.value;
+  document.getElementById('submit-form').submit();
+});
+
+function renderResults(data) {
+  resultsPanel.style.display = 'block';
+  const passColor = data.all_passed ? '#4ec9b0' : '#f14c4c';
+  resultsSummary.innerHTML =
+    `<span style="color:${passColor};">${data.passed_count}/${data.total_count} Test Cases Passed</span>`;
+
+  let html = '<table class="table table-sm mb-0" style="color:#ccc; font-size:13px;">';
+  html += '<thead><tr style="color:#888;">' +
+    '<th style="width:60px">Test</th>' +
+    '<th style="width:70px">Status</th>' +
+    '<th>Input</th>' +
+    '<th>Expected</th>' +
+    '<th>Got</th>' +
+    '<th>Error</th>' +
+    '</tr></thead><tbody>';
+
+  data.results.forEach(r => {
+    const badge = r.passed
+      ? '<span style="color:#4ec9b0;">&#10003; Pass</span>'
+      : '<span style="color:#f14c4c;">&#10007; Fail</span>';
+    const tcLabel = `TC ${r.tc_number}${r.is_sample ? ' <span style="color:#888;font-size:11px;">(sample)</span>' : ''}`;
+    const input   = escHtml((r.input || '').replace(/\n/g, ', '));
+    const expected = escHtml(r.expected || '');
+    const actual = escHtml(r.actual || '');
+    const error = r.error ? `<span style="color:#f14c4c;">${escHtml(r.error.substring(0,80))}</span>` : '';
+
+    html += `<tr style="border-color:#333;">
+      <td>${tcLabel}</td>
+      <td>${badge}</td>
+      <td><code style="color:#ce9178;">${input}</code></td>
+      <td><code style="color:#9cdcfe;">${expected}</code></td>
+      <td><code style="color:${r.passed ? '#9cdcfe' : '#f14c4c'};">${actual}</code></td>
+      <td>${error}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  resultsBody.innerHTML = html;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+{% endblock %}

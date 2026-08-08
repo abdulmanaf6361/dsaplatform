@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}My Submissions — {{ question.title }}{% endblock %}
+{% block content %}
+<h4><i class="bi bi-clock-history"></i> My Submissions: {{ question.title }}</h4>
+<a href="{% url 'question_detail' question.id %}" class="btn btn-sm btn-outline-dark mb-3">
+  <i class="bi bi-arrow-left"></i> Back to Question
+</a>
+{% if submissions %}
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead class="table-dark">
+      <tr><th>#</th><th>Time</th><th>Result</th><th>Passed</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      {% for sub in submissions %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ sub.submitted_at|date:"d M, H:i" }}</td>
+        <td>
+          {% if sub.all_passed %}
+          <span class="badge bg-success">All Passed</span>
+          {% else %}
+          <span class="badge bg-danger">Failed</span>
+          {% endif %}
+        </td>
+        <td>{{ sub.passed_cases }}/{{ sub.total_cases }}</td>
+        <td><a href="{% url 'submission_result' sub.id %}" class="btn btn-sm btn-outline-dark">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">No submissions yet.</div>
+{% endif %}
+{% endblock %}

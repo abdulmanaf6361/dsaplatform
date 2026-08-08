@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Trainer Panel{% endblock %}
+{% block content %}
+<h3><i class="bi bi-gear-fill"></i> Trainer Panel</h3>
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card text-center bg-dark text-white">
+      <div class="card-body">
+        <h2>{{ total_students }}</h2><p class="mb-0">Students</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-center bg-primary text-white">
+      <div class="card-body">
+        <h2>{{ total_submissions }}</h2><p class="mb-0">Submissions</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <a href="{% url 'trainer_submissions' %}" class="card text-center bg-success text-white text-decoration-none">
+      <div class="card-body">
+        <h2><i class="bi bi-code-square"></i></h2><p class="mb-0">View All Code</p>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-3">
+    <a href="{% url 'student_progress' %}" class="card text-center bg-warning text-dark text-decoration-none">
+      <div class="card-body">
+        <h2><i class="bi bi-bar-chart"></i></h2><p class="mb-0">Student Progress</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+<h5>Day Management — Unlock / Lock Days</h5>
+<div class="table-responsive">
+  <table class="table table-bordered">
+    <thead class="table-dark">
+      <tr><th>Day</th><th>Title</th><th>Topics</th><th>Questions</th><th>Status</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      {% for day in days %}
+      <tr>
+        <td><strong>Day {{ day.day_number }}</strong></td>
+        <td>{{ day.title }}</td>
+        <td><small class="text-muted">{{ day.topics }}</small></td>
+        <td>{{ day.questions.count }}</td>
+        <td>
+          {% if day.is_unlocked %}
+          <span class="badge bg-success"><i class="bi bi-unlock"></i> Unlocked</span>
+          {% else %}
+          <span class="badge bg-secondary"><i class="bi bi-lock"></i> Locked</span>
+          {% endif %}
+        </td>
+        <td>
+          <form method="post" action="{% url 'toggle_day' day.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm
+              {% if day.is_unlocked %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+              {% if day.is_unlocked %}Lock{% else %}Unlock{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Student Progress{% endblock %}
+{% block content %}
+<h4><i class="bi bi-bar-chart-fill"></i> Student Progress</h4>
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead class="table-dark">
+      <tr><th>Rank</th><th>Student</th><th>Batch</th><th>Solved</th><th>Progress</th></tr>
+    </thead>
+    <tbody>
+      {% for entry in data %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ entry.student.first_name }} {{ entry.student.last_name }}<br>
+          <small class="text-muted">{{ entry.student.username }}</small>
+        </td>
+        <td><small>{{ entry.student.batch_name }}</small></td>
+        <td><strong>{{ entry.passed }}</strong>/57</td>
+        <td style="width:200px;">
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar
+              {% if entry.passed >= 40 %}bg-success{% elif entry.passed >= 20 %}bg-warning{% else %}bg-danger{% endif %}"
+              style="width:{% widthratio entry.passed 57 100 %}%"></div>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted py-4">No students registered yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

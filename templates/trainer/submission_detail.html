@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}View Submission{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <a href="{% url 'trainer_submissions' %}" class="btn btn-sm btn-outline-dark">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+<div class="card shadow-sm">
+  <div class="card-header bg-dark text-white">
+    <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+    &mdash; {{ submission.question.title }}
+    <span class="float-end">{{ submission.submitted_at|date:"d M Y, H:i" }}</span>
+  </div>
+  <div class="card-body">
+    <div class="mb-3">
+      <strong>Result:</strong>
+      {% if submission.all_passed %}
+      <span class="badge bg-success">All {{ submission.total_cases }} test cases passed</span>
+      {% else %}
+      <span class="badge bg-danger">{{ submission.passed_cases }}/{{ submission.total_cases }} passed</span>
+      {% endif %}
+    </div>
+    <h6>Test Case Results</h6>
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered table-sm">
+        <thead class="table-dark">
+          <tr><th>Test</th><th>Status</th><th>Input</th><th>Expected</th><th>Got</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              {% if r.passed %}<span class="badge bg-success">Pass</span>
+              {% else %}<span class="badge bg-danger">Fail</span>{% endif %}
+            </td>
+            <td><code>{{ r.test_case.input_data|truncatechars:40 }}</code></td>
+            <td><code>{{ r.test_case.expected_output }}</code></td>
+            <td><code>{{ r.actual_output|default:"-" }}</code></td>
+            <td><small class="text-danger">{{ r.error|default:"" }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h6>Submitted Code</h6>
+    <pre class="bg-dark text-light p-3 rounded" style="font-size:13px;">{{ submission.code }}</pre>
+  </div>
+</div>
+{% endblock %}

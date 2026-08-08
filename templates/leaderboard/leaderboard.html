@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<h3><i class="bi bi-trophy-fill text-warning"></i> Leaderboard</h3>
+<p class="text-muted">Total questions: {{ total_questions }}</p>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-dark">
+        <tr><th>Rank</th><th>Student</th><th>Batch</th><th>Questions Solved</th><th>Progress</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in board %}
+        <tr {% if entry.student == user %}class="table-warning"{% endif %}>
+          <td>
+            {% if entry.rank == 1 %}<span class="fs-5">🥇</span>
+            {% elif entry.rank == 2 %}<span class="fs-5">🥈</span>
+            {% elif entry.rank == 3 %}<span class="fs-5">🥉</span>
+            {% else %}{{ entry.rank }}{% endif %}
+          </td>
+          <td>
+            {{ entry.student.first_name }} {{ entry.student.last_name }}
+            {% if entry.student == user %}<span class="badge bg-warning text-dark ms-1">You</span>{% endif %}
+          </td>
+          <td><small class="text-muted">{{ entry.student.batch_name }}</small></td>
+          <td><strong>{{ entry.passed_count }}</strong> / {{ total_questions }}</td>
+          <td style="width:200px;">
+            <div class="progress" style="height:8px;">
+              <div class="progress-bar bg-success" style="width:{% widthratio entry.passed_count total_questions 100 %}%"></div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No submissions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
