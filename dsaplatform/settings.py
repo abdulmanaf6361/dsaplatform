@@ -56,11 +56,11 @@ WSGI_APPLICATION = 'dsaplatform.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'dsaplatformdb'),
-        'USER': os.environ.get('DB_USER', 'dsaplatformuser'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'dsaplatformuser'),
-        'HOST': os.environ.get('DB_HOST', '13.203.169.251'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
