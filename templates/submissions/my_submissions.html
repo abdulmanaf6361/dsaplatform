@@ -1,36 +1,53 @@
 {% extends 'base.html' %}
+{% comment %} submissions/my_submissions.html {% endcomment %}
 {% block title %}My Submissions — {{ question.title }}{% endblock %}
 {% block content %}
-<h4><i class="bi bi-clock-history"></i> My Submissions: {{ question.title }}</h4>
-<a href="{% url 'question_detail' question.id %}" class="btn btn-sm btn-outline-dark mb-3">
-  <i class="bi bi-arrow-left"></i> Back to Question
-</a>
-{% if submissions %}
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead class="table-dark">
-      <tr><th>#</th><th>Time</th><th>Result</th><th>Passed</th><th>Action</th></tr>
-    </thead>
-    <tbody>
-      {% for sub in submissions %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ sub.submitted_at|date:"d M, H:i" }}</td>
-        <td>
-          {% if sub.all_passed %}
-          <span class="badge bg-success">All Passed</span>
-          {% else %}
-          <span class="badge bg-danger">Failed</span>
-          {% endif %}
-        </td>
-        <td>{{ sub.passed_cases }}/{{ sub.total_cases }}</td>
-        <td><a href="{% url 'submission_result' sub.id %}" class="btn btn-sm btn-outline-dark">View</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>My Submissions</h4>
+    <a href="{% url 'question_detail' question.id %}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-medium">
+        <i class="bi bi-arrow-left me-1"></i> Back to Editor
+    </a>
 </div>
-{% else %}
-<div class="alert alert-info">No submissions yet.</div>
-{% endif %}
+
+<p class="text-muted">{{ question.order }}. {{ question.title }}</p>
+
+<div class="card shadow-sm border-0 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Time Submitted</th>
+                    <th>Status</th>
+                    <th>Testcases</th>
+                    <th class="pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td class="ps-4 text-muted small">{{ sub.submitted_at|date:"M d, Y - H:i" }}</td>
+                    <td>
+                        {% if sub.all_passed %}
+                        <span class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> Accepted</span>
+                        {% else %}
+                        <span class="text-danger fw-bold"><i class="bi bi-x-circle-fill me-1"></i> Wrong Answer</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-medium">{{ sub.passed_cases }} / {{ sub.total_cases }}</td>
+                    <td class="pe-4 text-end">
+                        <a href="{% url 'submission_result' sub.id %}" class="btn btn-sm btn-light border px-3 rounded-pill">Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-5">
+                        <i class="bi bi-clock d-block fs-3 mb-2"></i>
+                        No submissions yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

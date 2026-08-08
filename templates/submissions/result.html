@@ -1,89 +1,64 @@
 {% extends 'base.html' %}
-{% block title %}Submission Result{% endblock %}
+{% comment %} submissions/result.html {% endcomment %}
+{% block title %}Submission Details{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-9">
-    <div class="card shadow-sm">
-      <div class="card-header {% if submission.all_passed %}bg-success{% else %}bg-danger{% endif %} text-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            {% if submission.all_passed %}
-            <i class="bi bi-check-circle-fill"></i> Accepted — All {{ submission.total_cases }} Test Cases Passed
-            {% else %}
-            <i class="bi bi-x-circle-fill"></i> Wrong Answer — {{ submission.passed_cases }}/{{ submission.total_cases }} Passed
-            {% endif %}
-          </h5>
-          <small>{{ submission.submitted_at|date:"d M Y, H:i" }}</small>
+<div class="mb-3">
+    <a href="{% url 'my_submissions' submission.question.id %}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-medium text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Back to Submissions
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 bg-white mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold mb-0 {% if submission.all_passed %}text-success{% else %}text-danger{% endif %}">
+                {% if submission.all_passed %}Accepted{% else %}Wrong Answer{% endif %}
+            </h3>
+            <span class="text-muted small"><i class="bi bi-clock me-1"></i>{{ submission.submitted_at|date:"M d, Y - H:i" }}</span>
         </div>
-      </div>
-      <div class="card-body">
-        <p class="text-muted mb-3">
-          <i class="bi bi-file-code"></i> {{ submission.question.title }}
-          &nbsp;&mdash;&nbsp; Day {{ submission.question.day.day_number }}
+        
+        <p class="fw-medium fs-5 border-bottom pb-3">
+            {{ submission.question.title }}
+            <span class="badge bg-light text-dark border ms-2 fw-normal" style="font-size: 0.8rem;">Day {{ submission.question.day.day_number }}</span>
         </p>
 
-        <!-- Test Case Results Table -->
-        <h6 class="mb-3">Test Case Results</h6>
-        <div class="table-responsive mb-4">
-          <table class="table table-bordered table-sm align-middle">
-            <thead class="table-dark">
-              <tr>
-                <th style="width:80px">#</th>
-                <th style="width:90px">Status</th>
-                <th>Input</th>
-                <th>Expected Output</th>
-                <th>Your Output</th>
-                <th>Error</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in results %}
-              <tr class="{% if r.passed %}table-success{% else %}table-danger{% endif %}">
-                <td>
-                  Test {{ forloop.counter }}
-                  {% if r.test_case.is_sample %}
-                  <span class="badge bg-secondary ms-1" style="font-size:10px;">sample</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if r.passed %}
-                  <span class="text-success fw-bold">&#10003; Pass</span>
-                  {% else %}
-                  <span class="text-danger fw-bold">&#10007; Fail</span>
-                  {% endif %}
-                </td>
-                <td><code>{{ r.test_case.input_data|truncatechars:60 }}</code></td>
-                <td><code>{{ r.test_case.expected_output }}</code></td>
-                <td><code>{{ r.actual_output|default:"(no output)" }}</code></td>
-                <td>
-                  {% if r.error %}
-                  <span class="text-danger small">{{ r.error|truncatechars:100 }}</span>
-                  {% else %}&mdash;{% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <h6 class="fw-bold mt-4 mb-3 text-muted text-uppercase small">Testcases ({{ submission.passed_cases }}/{{ submission.total_cases }} Passed)</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle" style="font-size: 0.9rem;">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="text-center" style="width: 60px;">#</th>
+                        <th style="width: 100px;">Status</th>
+                        <th>Input</th>
+                        <th>Expected</th>
+                        <th>Got</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr class="{% if not r.passed %}table-danger{% endif %}">
+                        <td class="text-center text-muted">{{ forloop.counter }}</td>
+                        <td class="fw-bold {% if r.passed %}text-success{% else %}text-danger{% endif %}">
+                            {% if r.passed %}Pass{% else %}Fail{% endif %}
+                        </td>
+                        <td><code class="text-dark bg-light px-1 rounded">{{ r.test_case.input_data|truncatechars:40 }}</code></td>
+                        <td><code class="text-dark bg-light px-1 rounded">{{ r.test_case.expected_output }}</code></td>
+                        <td>
+                            <code class="{% if r.passed %}text-dark{% else %}text-danger fw-bold{% endif %} bg-light px-1 rounded">
+                                {{ r.actual_output|default:"(No output)" }}
+                            </code>
+                            {% if r.error %}<div class="text-danger small mt-1">{{ r.error|truncatechars:80 }}</div>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
 
-        <!-- Submitted Code -->
-        <h6>Submitted Code</h6>
-        <pre class="bg-dark text-light p-3 rounded" style="font-size:13px; font-family:'Courier New',monospace;">{{ submission.question.day.day_number }}<!-- signature shown separately -->
-{{ submission.code }}</pre>
-
-        <div class="mt-3 d-flex gap-2 flex-wrap">
-          <a href="{% url 'question_detail' submission.question.id %}" class="btn btn-dark">
-            <i class="bi bi-arrow-left"></i> Back to Question
-          </a>
-          <a href="{% url 'my_submissions' submission.question.id %}" class="btn btn-outline-secondary">
-            <i class="bi bi-clock-history"></i> All My Submissions
-          </a>
-          <a href="{% url 'dashboard' %}" class="btn btn-outline-dark">
-            <i class="bi bi-house"></i> Dashboard
-          </a>
+        <h6 class="fw-bold mt-4 mb-3 text-muted text-uppercase small">Submitted Code</h6>
+        <div class="bg-dark rounded p-3 overflow-auto" style="border: 1px solid #333;">
+            <pre class="mb-0" style="color: #d4d4d4; font-family: 'Menlo', 'Monaco', monospace; font-size: 14px;">{{ submission.code }}</pre>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}

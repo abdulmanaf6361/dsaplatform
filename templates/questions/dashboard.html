@@ -1,70 +1,74 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard — DSA with Python{% endblock %}
+{% comment %} questions/dashboard.html {% endcomment %}
+{% block title %}Problemset — DSA with Python{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h2>Welcome, {{ user.first_name|default:user.username }}! <i class="bi bi-hand-wave"></i></h2>
-    <p class="text-muted mb-0">Batch: {{ user.batch_name }}</p>
-  </div>
-  <a href="{% url 'leaderboard' %}" class="btn btn-outline-dark">
-    <i class="bi bi-trophy"></i> Leaderboard
-  </a>
+    <div>
+        <h3 class="fw-bold mb-1">Study Plan</h3>
+        <p class="text-muted mb-0">Batch: {{ user.batch_name }} &bull; Master Data Structures and Algorithms</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'leaderboard' %}" class="btn btn-light border shadow-sm rounded-pill px-4 fw-medium">
+            <i class="bi bi-trophy-fill text-warning"></i> Leaderboard
+        </a>
+    </div>
 </div>
 
-{% for day in days %}
-<div class="card mb-3 {% if not day.is_unlocked %}locked-day{% endif %}">
-  <div class="card-header d-flex justify-content-between align-items-center
-    {% if day.is_unlocked %}bg-dark text-white{% else %}bg-secondary text-white{% endif %}">
-    <div>
-      <strong>Day {{ day.day_number }}: {{ day.title }}</strong>
-      <small class="ms-2 opacity-75">{{ day.topics }}</small>
-    </div>
-    <div>
-      {% if day.is_unlocked %}
-        <span class="badge bg-success"><i class="bi bi-unlock"></i> Unlocked</span>
-      {% else %}
-        <span class="badge bg-secondary"><i class="bi bi-lock"></i> Locked</span>
-      {% endif %}
-    </div>
-  </div>
-  {% if day.is_unlocked %}
-  <div class="card-body">
-    <div class="row g-2">
-      {% for question in day.questions.all %}
-      <div class="col-md-4">
-        <div class="card h-100 {% if question.id in passed_question_ids %}border-success{% endif %}">
-          <div class="card-body p-3">
-            <div class="d-flex justify-content-between align-items-start mb-1">
-              <span class="badge
-                {% if question.difficulty == 'easy' %}bg-success
-                {% elif question.difficulty == 'medium' %}bg-warning text-dark
-                {% else %}bg-danger{% endif %}">
-                {{ question.get_difficulty_display }}
-              </span>
-              {% if question.id in passed_question_ids %}
-              <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
-              {% endif %}
+<div class="card overflow-hidden shadow-sm border-0 bg-white">
+    {% for day in days %}
+    <div class="border-bottom {% if not day.is_unlocked %}locked-day bg-light{% endif %}">
+        <div class="px-4 py-3 bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#day-{{ day.id }}" style="cursor:pointer;">
+            <div class="d-flex align-items-center gap-3">
+                <h6 class="mb-0 fw-bold">Day {{ day.day_number }}: {{ day.title }}</h6>
+                <span class="text-muted small">{{ day.topics }}</span>
             </div>
-            <h6 class="card-title mt-2">{{ question.title }}</h6>
-            <a href="{% url 'question_detail' question.id %}" class="btn btn-sm
-              {% if question.id in passed_question_ids %}btn-outline-success{% else %}btn-outline-dark{% endif %} w-100">
-              {% if question.id in passed_question_ids %}View / Retry{% else %}Solve{% endif %}
-            </a>
-          </div>
+            <div>
+                {% if not day.is_unlocked %}
+                    <i class="bi bi-lock-fill text-muted"></i>
+                {% else %}
+                    <i class="bi bi-chevron-down text-muted"></i>
+                {% endif %}
+            </div>
         </div>
-      </div>
-      {% empty %}
-      <p class="text-muted">No questions for this day yet.</p>
-      {% endfor %}
+        
+        <div class="collapse show" id="day-{{ day.id }}">
+            <table class="table table-hover mb-0 align-middle text-nowrap" style="font-size: 0.95rem;">
+                <tbody>
+                    {% for question in day.questions.all %}
+                    <tr onclick="window.location='{% url 'question_detail' question.id %}'" style="cursor: pointer;">
+                        <td class="text-center" style="width: 50px;">
+                            {% if question.id in passed_question_ids %}
+                                <i class="bi bi-check-circle-fill passed-icon"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'question_detail' question.id %}" class="text-decoration-none text-dark fw-medium">
+                                {{ question.order }}. {{ question.title }}
+                            </a>
+                        </td>
+                        <td style="width: 120px;" class="text-end pe-4">
+                            <span class="badge 
+                                {% if question.difficulty == 'easy' %}badge-easy
+                                {% elif question.difficulty == 'medium' %}badge-medium
+                                {% else %}badge-hard{% endif %}">
+                                {{ question.get_difficulty_display|title }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-muted text-center py-3">Problems are being added to this day.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
-  {% else %}
-  <div class="card-body text-muted">
-    <i class="bi bi-lock"></i> This day will be unlocked by your trainer.
-  </div>
-  {% endif %}
+    {% empty %}
+    <div class="p-5 text-center text-muted">
+        <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+        No days loaded yet. Ask your trainer to load the study plan.
+    </div>
+    {% endfor %}
 </div>
-{% empty %}
-<div class="alert alert-info">No days loaded yet. Ask your trainer to load the questions.</div>
-{% endfor %}
 {% endblock %}

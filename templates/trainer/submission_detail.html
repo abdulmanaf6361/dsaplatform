@@ -1,51 +1,72 @@
 {% extends 'base.html' %}
-{% block title %}View Submission{% endblock %}
+{% comment %} trainer/submission_detail.html {% endcomment %}
+{% block title %}Review Submission{% endblock %}
 {% block content %}
 <div class="mb-3">
-  <a href="{% url 'trainer_submissions' %}" class="btn btn-sm btn-outline-dark">
-    <i class="bi bi-arrow-left"></i> Back
-  </a>
+    <a href="{% url 'trainer_submissions' %}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-medium text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i> Back to Submissions
+    </a>
 </div>
-<div class="card shadow-sm">
-  <div class="card-header bg-dark text-white">
-    <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
-    &mdash; {{ submission.question.title }}
-    <span class="float-end">{{ submission.submitted_at|date:"d M Y, H:i" }}</span>
-  </div>
-  <div class="card-body">
-    <div class="mb-3">
-      <strong>Result:</strong>
-      {% if submission.all_passed %}
-      <span class="badge bg-success">All {{ submission.total_cases }} test cases passed</span>
-      {% else %}
-      <span class="badge bg-danger">{{ submission.passed_cases }}/{{ submission.total_cases }} passed</span>
-      {% endif %}
+
+<div class="card shadow-sm border-0 bg-white mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="fw-bold mb-0">{{ submission.student.first_name }} {{ submission.student.last_name }}</h4>
+            <span class="text-muted small"><i class="bi bi-clock me-1"></i>{{ submission.submitted_at|date:"M d Y, H:i" }}</span>
+        </div>
+        
+        <p class="fw-medium fs-5 border-bottom pb-3">
+            {{ submission.question.title }}
+            <span class="badge bg-light text-dark border ms-2 fw-normal" style="font-size: 0.8rem;">Day {{ submission.question.day.day_number }}</span>
+        </p>
+        
+        <div class="mb-4 mt-3">
+            {% if submission.all_passed %}
+            <span class="text-success fw-bold fs-5"><i class="bi bi-check-circle-fill me-1"></i> Accepted</span>
+            <span class="text-muted ms-2">All {{ submission.total_cases }} cases passed</span>
+            {% else %}
+            <span class="text-danger fw-bold fs-5"><i class="bi bi-x-circle-fill me-1"></i> Wrong Answer</span>
+            <span class="text-muted ms-2">{{ submission.passed_cases }}/{{ submission.total_cases }} cases passed</span>
+            {% endif %}
+        </div>
+
+        <h6 class="fw-bold mb-3 text-muted text-uppercase small">Submitted Code</h6>
+        <div class="bg-dark rounded p-3 overflow-auto mb-4" style="border: 1px solid #333;">
+            <pre class="mb-0" style="color: #d4d4d4; font-family: 'Menlo', 'Monaco', monospace; font-size: 14px;">{{ submission.code }}</pre>
+        </div>
+
+        <h6 class="fw-bold mb-3 text-muted text-uppercase small">Testcase Execution Details</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle" style="font-size: 0.9rem;">
+                <thead class="bg-light text-muted">
+                    <tr>
+                        <th class="text-center" style="width: 50px;">Test</th>
+                        <th style="width: 80px;">Status</th>
+                        <th>Input</th>
+                        <th>Expected</th>
+                        <th>Student Output</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr class="{% if not r.passed %}table-danger{% endif %}">
+                        <td class="text-center text-muted">{{ forloop.counter }}</td>
+                        <td class="fw-bold {% if r.passed %}text-success{% else %}text-danger{% endif %}">
+                            {% if r.passed %}Pass{% else %}Fail{% endif %}
+                        </td>
+                        <td><code class="text-dark bg-light px-1 rounded">{{ r.test_case.input_data|truncatechars:40 }}</code></td>
+                        <td><code class="text-dark bg-light px-1 rounded">{{ r.test_case.expected_output }}</code></td>
+                        <td>
+                            <code class="{% if r.passed %}text-dark{% else %}text-danger fw-bold{% endif %} bg-light px-1 rounded">
+                                {{ r.actual_output|default:"-" }}
+                            </code>
+                            {% if r.error %}<div class="text-danger small mt-1">{{ r.error }}</div>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-    <h6>Test Case Results</h6>
-    <div class="table-responsive mb-4">
-      <table class="table table-bordered table-sm">
-        <thead class="table-dark">
-          <tr><th>Test</th><th>Status</th><th>Input</th><th>Expected</th><th>Got</th><th>Error</th></tr>
-        </thead>
-        <tbody>
-          {% for r in results %}
-          <tr>
-            <td>{{ forloop.counter }}</td>
-            <td>
-              {% if r.passed %}<span class="badge bg-success">Pass</span>
-              {% else %}<span class="badge bg-danger">Fail</span>{% endif %}
-            </td>
-            <td><code>{{ r.test_case.input_data|truncatechars:40 }}</code></td>
-            <td><code>{{ r.test_case.expected_output }}</code></td>
-            <td><code>{{ r.actual_output|default:"-" }}</code></td>
-            <td><small class="text-danger">{{ r.error|default:"" }}</small></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <h6>Submitted Code</h6>
-    <pre class="bg-dark text-light p-3 rounded" style="font-size:13px;">{{ submission.code }}</pre>
-  </div>
 </div>
 {% endblock %}

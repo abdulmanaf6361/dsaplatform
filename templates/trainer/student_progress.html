@@ -1,33 +1,49 @@
 {% extends 'base.html' %}
+{% comment %} trainer/student_progress.html {% endcomment %}
 {% block title %}Student Progress{% endblock %}
 {% block content %}
-<h4><i class="bi bi-bar-chart-fill"></i> Student Progress</h4>
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead class="table-dark">
-      <tr><th>Rank</th><th>Student</th><th>Batch</th><th>Solved</th><th>Progress</th></tr>
-    </thead>
-    <tbody>
-      {% for entry in data %}
-      <tr>
-        <td>{{ forloop.counter }}</td>
-        <td>{{ entry.student.first_name }} {{ entry.student.last_name }}<br>
-          <small class="text-muted">{{ entry.student.username }}</small>
-        </td>
-        <td><small>{{ entry.student.batch_name }}</small></td>
-        <td><strong>{{ entry.passed }}</strong>/57</td>
-        <td style="width:200px;">
-          <div class="progress" style="height:8px;">
-            <div class="progress-bar
-              {% if entry.passed >= 40 %}bg-success{% elif entry.passed >= 20 %}bg-warning{% else %}bg-danger{% endif %}"
-              style="width:{% widthratio entry.passed 57 100 %}%"></div>
-          </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-center text-muted py-4">No students registered yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Student Progress</h4>
+    <a href="{% url 'trainer_dashboard' %}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-medium">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4" style="width:60px;">#</th>
+                    <th>Student Details</th>
+                    <th>Batch</th>
+                    <th class="text-center">Solved</th>
+                    <th class="pe-4" style="width:250px;">Overall Completion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in data %}
+                <tr>
+                    <td class="ps-4 text-muted">{{ forloop.counter }}</td>
+                    <td>
+                        <div class="fw-bold">{{ entry.student.first_name }} {{ entry.student.last_name }}</div>
+                        <div class="small text-muted">{{ entry.student.username }}</div>
+                    </td>
+                    <td><span class="badge bg-light border text-dark">{{ entry.student.batch_name }}</span></td>
+                    <td class="text-center fw-bold">{{ entry.passed }} <span class="fw-normal text-muted small">/ 57</span></td>
+                    <td class="pe-4">
+                        <div class="progress rounded-pill bg-light border" style="height:10px;">
+                            <div class="progress-bar 
+                                {% if entry.passed >= 40 %}bg-success{% elif entry.passed >= 20 %}bg-warning{% else %}bg-danger{% endif %}"
+                                style="width:{% widthratio entry.passed 57 100 %}%"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-5">No students registered yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

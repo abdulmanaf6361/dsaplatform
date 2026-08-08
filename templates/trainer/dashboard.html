@@ -1,70 +1,95 @@
 {% extends 'base.html' %}
+{% comment %} trainer/dashboard.html {% endcomment %}
 {% block title %}Trainer Panel{% endblock %}
 {% block content %}
-<h3><i class="bi bi-gear-fill"></i> Trainer Panel</h3>
-<div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card text-center bg-dark text-white">
-      <div class="card-body">
-        <h2>{{ total_students }}</h2><p class="mb-0">Students</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card text-center bg-primary text-white">
-      <div class="card-body">
-        <h2>{{ total_submissions }}</h2><p class="mb-0">Submissions</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <a href="{% url 'trainer_submissions' %}" class="card text-center bg-success text-white text-decoration-none">
-      <div class="card-body">
-        <h2><i class="bi bi-code-square"></i></h2><p class="mb-0">View All Code</p>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3">
-    <a href="{% url 'student_progress' %}" class="card text-center bg-warning text-dark text-decoration-none">
-      <div class="card-body">
-        <h2><i class="bi bi-bar-chart"></i></h2><p class="mb-0">Student Progress</p>
-      </div>
-    </a>
-  </div>
+<div class="mb-4">
+    <h3 class="fw-bold"><i class="bi bi-gear-fill me-2"></i>Trainer Panel</h3>
+    <p class="text-muted">Manage batches, monitor progress, and review code.</p>
 </div>
 
-<h5>Day Management — Unlock / Lock Days</h5>
-<div class="table-responsive">
-  <table class="table table-bordered">
-    <thead class="table-dark">
-      <tr><th>Day</th><th>Title</th><th>Topics</th><th>Questions</th><th>Status</th><th>Action</th></tr>
-    </thead>
-    <tbody>
-      {% for day in days %}
-      <tr>
-        <td><strong>Day {{ day.day_number }}</strong></td>
-        <td>{{ day.title }}</td>
-        <td><small class="text-muted">{{ day.topics }}</small></td>
-        <td>{{ day.questions.count }}</td>
-        <td>
-          {% if day.is_unlocked %}
-          <span class="badge bg-success"><i class="bi bi-unlock"></i> Unlocked</span>
-          {% else %}
-          <span class="badge bg-secondary"><i class="bi bi-lock"></i> Locked</span>
-          {% endif %}
-        </td>
-        <td>
-          <form method="post" action="{% url 'toggle_day' day.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm
-              {% if day.is_unlocked %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
-              {% if day.is_unlocked %}Lock{% else %}Unlock{% endif %}
-            </button>
-          </form>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="row g-3 mb-5">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-white h-100 p-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-light rounded p-3 me-3 text-dark fs-4"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ total_students }}</h3>
+                    <p class="text-muted small text-uppercase fw-bold mb-0">Students</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-white h-100 p-3">
+            <div class="d-flex align-items-center">
+                <div class="bg-light rounded p-3 me-3 text-dark fs-4"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                <div>
+                    <h3 class="fw-bold mb-0">{{ total_submissions }}</h3>
+                    <p class="text-muted small text-uppercase fw-bold mb-0">Submissions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'trainer_submissions' %}" class="card shadow-sm border-0 bg-dark text-white text-decoration-none h-100 p-3 transition-hover">
+            <div class="d-flex align-items-center h-100">
+                <div class="fs-2 me-3"><i class="bi bi-code-square"></i></div>
+                <div><h6 class="fw-bold mb-0">View All Code</h6><small class="opacity-75">Review student logic</small></div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'student_progress' %}" class="card shadow-sm border-0 bg-light text-dark text-decoration-none h-100 p-3 border">
+            <div class="d-flex align-items-center h-100">
+                <div class="fs-2 me-3"><i class="bi bi-bar-chart-fill text-dark"></i></div>
+                <div><h6 class="fw-bold mb-0">Student Progress</h6><small class="text-muted">Rankings & Stats</small></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3">Study Plan Management</h5>
+<div class="card shadow-sm border-0 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Day</th>
+                    <th>Title & Topics</th>
+                    <th class="text-center">Questions</th>
+                    <th>Status</th>
+                    <th class="pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day in days %}
+                <tr>
+                    <td class="ps-4 fw-bold">Day {{ day.day_number }}</td>
+                    <td>
+                        <div class="fw-medium">{{ day.title }}</div>
+                        <small class="text-muted">{{ day.topics }}</small>
+                    </td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">{{ day.questions.count }}</span></td>
+                    <td>
+                        {% if day.is_unlocked %}
+                        <span class="text-success fw-medium small"><i class="bi bi-unlock-fill me-1"></i> Unlocked</span>
+                        {% else %}
+                        <span class="text-muted fw-medium small"><i class="bi bi-lock-fill me-1"></i> Locked</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        <form method="post" action="{% url 'toggle_day' day.id %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-medium
+                                {% if day.is_unlocked %}btn-light text-danger border{% else %}btn-dark{% endif %}">
+                                {% if day.is_unlocked %}Lock{% else %}Unlock{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -1,226 +1,427 @@
 {% extends 'base.html' %}
-{% block title %}{{ question.title }}{% endblock %}
+{% comment %} questions/question_detail.html {% endcomment %}
+{% block title %}{{ question.title }} - DSA with Python{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 1. Global & Layout Setup */
+    body { 
+        overflow: hidden; 
+        background-color: #f8f9fa; 
+    }
+    .alert { margin-bottom: 0; }
+
+    #workspace-wrapper {
+        position: fixed;
+        top: 60px; 
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: row;
+        z-index: 100;
+    }
+
+    /* Split.js Gutter */
+    .gutter { 
+        background-color: #e9ecef; 
+        cursor: col-resize; 
+        transition: background-color 0.2s;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+    }
+    .gutter:hover { background-color: #00b8a3; }
+
+    /* 2. Panel Layouts */
+    .panel-left { 
+        overflow-y: auto; 
+        padding: 32px; 
+        height: 100%;
+        background: #ffffff;
+    }
+    
+    .panel-right { 
+        background: #1e1e1e; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100%; 
+        overflow: hidden; 
+    }
+
+    /* 3. Left Panel Typography */
+    .nav-tabs .nav-link { color: #6c757d; border: none; font-weight: 500; padding: 0.5rem 1rem; border-bottom: 2px solid transparent; }
+    .nav-tabs .nav-link.active { color: #000; border-bottom: 2px solid #000; background: transparent; }
+    .problem-prose { font-size: 0.95rem; line-height: 1.7; color: #333; margin-top: 1.5rem; }
+    .example-box { 
+        background: #fafafa; 
+        border: 1px solid #eee; 
+        border-radius: 6px; 
+        padding: 12px 16px; 
+        margin-bottom: 16px; 
+        font-family: 'Menlo', monospace;
+        font-size: 0.9rem;
+    }
+    .example-box pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; color: #333; }
+    
+    /* 4. Right Panel Elements */
+    .editor-toolbar { background: #252526; border-bottom: 1px solid #333; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .btn-run { background: transparent; color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 6px 16px; font-size: 0.85rem; transition: all 0.2s; }
+    .btn-run:hover { background: #333; color: #fff; border-color: #555; }
+    .btn-submit { background: #00b8a3; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .btn-submit:hover { background: #009c8a; color: #fff; }
+    .btn-submit:disabled { background: #005f57; color: #88c7bf; }
+
+    /* ACE Editor Container */
+    #editor {
+        flex-grow: 1;
+        flex-shrink: 1;
+        min-height: 0;          
+        width: 100%;
+        font-size: 16px;
+        position: relative;     
+    }
+
+    /* 5. Clean Console UI */
+    .console-panel { background: #1e1e1e; border-top: 1px solid #333; display: flex; flex-direction: column; transition: height 0.2s; z-index: 10; flex-shrink: 0; }
+    .console-header { padding: 10px 16px; background: #252526; font-size: 0.85rem; font-weight: 600; color: #ccc; display: flex; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #333; }
+    .console-body { flex-grow: 1; overflow-y: auto; padding: 16px; color: #d4d4d4; font-family: 'Menlo', monospace; font-size: 0.85rem; display: none; }
+    .console-body.open { display: block; }
+
+    /* Clean Result Cards */
+    .result-summary { padding: 12px; border-radius: 6px; margin-bottom: 16px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+    .summary-passed { background: rgba(78, 201, 176, 0.1); color: #4ec9b0; border: 1px solid rgba(78, 201, 176, 0.2); }
+    .summary-failed { background: rgba(241, 76, 76, 0.1); color: #f14c4c; border: 1px solid rgba(241, 76, 76, 0.2); }
+
+    .result-card { background: #252526; border: 1px solid #333; border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+    .result-card-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #2d2d2d; border-bottom: 1px solid #333; font-size: 0.85rem; }
+    .status-passed { color: #4ec9b0; font-weight: 600; }
+    .status-failed { color: #f14c4c; font-weight: 600; }
+    .case-num { color: #858585; }
+    
+    .result-grid { padding: 12px 16px; }
+    .result-line { display: flex; margin-bottom: 8px; font-family: 'Menlo', monospace; font-size: 0.85rem; }
+    .result-line:last-child { margin-bottom: 0; }
+    .result-key { width: 80px; color: #858585; flex-shrink: 0; padding-top: 2px; }
+    .result-val { color: #d4d4d4; flex-grow: 1; white-space: pre-wrap; word-break: break-all; background: #1e1e1e; padding: 4px 8px; border-radius: 4px; border: 1px solid #333; }
+    .text-failed { color: #f14c4c; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row g-3" style="height: calc(100vh - 120px);">
+<div id="workspace-wrapper">
+    
+    <!-- LEFT PANEL: Problem Description -->
+    <div id="split-left" class="panel-left">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link active" href="#"><i class="bi bi-file-text me-1"></i> Description</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'my_submissions' question.id %}"><i class="bi bi-clock-history me-1"></i> Submissions</a>
+            </li>
+        </ul>
 
-  <!-- LEFT: Problem Statement -->
-  <div class="col-md-5 d-flex flex-column">
-    <div class="card shadow-sm flex-grow-1 overflow-auto">
-      <div class="card-header bg-dark text-white">
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted small">Day {{ question.day.day_number }} &mdash; Q{{ question.order }}</span>
-          <span class="badge
-            {% if question.difficulty == 'easy' %}bg-success
-            {% elif question.difficulty == 'medium' %}bg-warning text-dark
-            {% else %}bg-danger{% endif %}">
-            {{ question.get_difficulty_display }}
-          </span>
+        <h4 class="fw-bold">{{ question.order }}. {{ question.title }}</h4>
+        <div class="d-flex align-items-center gap-3 mt-2 mb-4">
+            <span class="badge 
+                {% if question.difficulty == 'easy' %}badge-easy
+                {% elif question.difficulty == 'medium' %}badge-medium
+                {% else %}badge-hard{% endif %}">
+                {{ question.get_difficulty_display|title }}
+            </span>
+            <span class="text-muted small">Day {{ question.day.day_number }}</span>
         </div>
-        <h5 class="mb-0 mt-1">{{ question.title }}</h5>
-      </div>
-      <div class="card-body overflow-auto" style="max-height: calc(100vh - 250px);">
-        <h6 class="text-muted text-uppercase small fw-bold">Description</h6>
-        <p>{{ question.description|linebreaks }}</p>
 
-        {% if question.constraints %}
-        <h6 class="text-muted text-uppercase small fw-bold">Constraints</h6>
-        <p class="small">{{ question.constraints }}</p>
-        {% endif %}
+        <div class="problem-prose">
+            {{ question.description|linebreaks }}
+        </div>
 
         {% if sample_cases %}
-        <h6 class="text-muted text-uppercase small fw-bold mt-3">Examples</h6>
-        {% for tc in sample_cases %}
-        <div class="bg-light rounded p-3 mb-2 small">
-          <div class="mb-1"><span class="fw-bold">Input:</span> <code>{{ tc.input_data }}</code></div>
-          <div><span class="fw-bold">Output:</span><pre class="mb-0 mt-1" style="font-size:13px; background:transparent;">{{ tc.expected_output }}</pre></div>
+        <div class="mt-4">
+            {% for tc in sample_cases %}
+            <p class="fw-bold mb-2 small text-muted text-uppercase">Example {{ forloop.counter }}:</p>
+            <div class="example-box">
+                <div class="mb-2"><strong class="text-secondary">Input:</strong> <code>{{ tc.input_data }}</code></div>
+                <div><strong class="text-secondary">Output:</strong> <pre class="mt-1 mb-0">{{ tc.expected_output }}</pre></div>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
         {% endif %}
 
-        <div class="mt-3">
-          <a href="{% url 'my_submissions' question.id %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-clock-history"></i> My Submissions
-          </a>
+        {% if question.constraints %}
+        <div class="mt-4">
+            <p class="fw-bold mb-2 small text-muted text-uppercase">Constraints:</p>
+            <ul class="text-muted small bg-light p-3 rounded" style="font-family: monospace;">
+                <li>{{ question.constraints }}</li>
+            </ul>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT: Code Editor -->
-  <div class="col-md-7 d-flex flex-column">
-    <div class="card shadow-sm flex-grow-1 d-flex flex-column">
-      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
-        <span><i class="bi bi-code-slash"></i> Python 3</span>
-        <div class="d-flex gap-2 align-items-center">
-          <span id="run-status" class="small text-muted"></span>
-          <button id="run-btn" class="btn btn-sm btn-outline-warning">
-            <i class="bi bi-play-fill"></i> Run
-          </button>
-          <button id="submit-btn" class="btn btn-sm btn-success" disabled>
-            <i class="bi bi-send-fill"></i> Submit
-          </button>
-        </div>
-      </div>
-
-      <!-- Read-only signature -->
-      <div class="px-3 pt-2 pb-0" style="background:#1e1e1e;">
-        <pre class="mb-0" style="color:#569cd6; font-family:'Courier New',monospace; font-size:14px; user-select:none;">{{ signature_line }}</pre>
-      </div>
-
-      <!-- Editable body -->
-      <textarea id="code-editor"
-        class="flex-grow-1 p-3"
-        style="background:#1e1e1e; color:#d4d4d4; font-family:'Courier New',monospace;
-               font-size:14px; border:none; outline:none; resize:none;
-               padding-left: 2.5rem !important;"
-        placeholder="# Write your solution here (no need to indent — platform handles it)&#10;return "
-        spellcheck="false"
-      >{% if last_code_body %}{{ last_code_body }}{% endif %}</textarea>
-
-      <!-- Results Panel -->
-      <div id="results-panel" class="border-top" style="background:#1e1e1e; max-height:280px; overflow-y:auto; display:none;">
-        <div class="p-2 d-flex justify-content-between align-items-center" style="background:#252526;">
-          <span id="results-summary" class="small text-white fw-bold"></span>
-          <button class="btn btn-sm btn-link text-muted p-0" onclick="document.getElementById('results-panel').style.display='none'">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-        <div id="results-body" class="p-2"></div>
-      </div>
+        {% endif %}
     </div>
 
-    <!-- Hidden submit form -->
-    <form id="submit-form" method="post" action="{% url 'submit_code' question.id %}" style="display:none;">
-      {% csrf_token %}
-      <input type="hidden" name="code" id="submit-code-input">
-    </form>
-  </div>
+    <!-- RIGHT PANEL: Ace Editor & Console -->
+    <div id="split-right" class="panel-right">
+        
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+            <div><span class="badge bg-secondary">Python 3</span></div>
+            <div class="d-flex align-items-center gap-2">
+                <span id="run-status" class="small me-2"></span>
+                <button id="run-btn" class="btn-run"><i class="bi bi-play-fill"></i> Run</button>
+                <button id="submit-btn" class="btn-submit" disabled><i class="bi bi-cloud-arrow-up-fill"></i> Submit</button>
+            </div>
+        </div>
+
+        <!-- ACE Editor Container -->
+        <div id="editor"></div>
+        
+        <!-- Testcase Console -->
+        <div class="console-panel" id="console-wrapper" style="height: 42px;">
+            <div class="console-header" id="console-toggle">
+                <span><i class="bi bi-terminal me-2"></i> Testcase Console</span>
+                <i class="bi bi-chevron-up" id="console-chevron"></i>
+            </div>
+            <div class="console-body" id="results-body">
+                <div class="text-muted">Run your code to see test results here.</div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Hidden initial code -->
+<script type="text/plain" id="initial-code">{% if last_code_body %}{{ last_code_body }}{% else %}{{ signature_line }}
+    # Write your solution here
+    return{% endif %}</script>
+
+<!-- Hidden submit form -->
+<form id="submit-form" method="post" action="{% url 'submit_code' question.id %}" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="code" id="submit-code-input">
+</form>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+
 <script>
-const QUESTION_ID = {{ question.id }};
-const RUN_URL = "{% url 'run_code' question.id %}";
-const CSRF = "{{ csrf_token }}";
-let hasRun = false;
-
-const editor = document.getElementById('code-editor');
-const runBtn = document.getElementById('run-btn');
-const submitBtn = document.getElementById('submit-btn');
-const runStatus = document.getElementById('run-status');
-const resultsPanel = document.getElementById('results-panel');
-const resultsSummary = document.getElementById('results-summary');
-const resultsBody = document.getElementById('results-body');
-
-// Tab key inserts spaces instead of changing focus
-editor.addEventListener('keydown', function(e) {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const start = this.selectionStart;
-    const end = this.selectionEnd;
-    this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
-    this.selectionStart = this.selectionEnd = start + 4;
-  }
-});
-
-runBtn.addEventListener('click', async function() {
-  const code = editor.value.trim();
-  if (!code) {
-    alert('Please write your solution first.');
-    return;
-  }
-
-  runBtn.disabled = true;
-  runBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Running...';
-  runStatus.textContent = '';
-  submitBtn.disabled = true;
-  hasRun = false;
-
-  try {
-    const resp = await fetch(RUN_URL, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
-      body: JSON.stringify({code: code})
+    // 1. Initialize Ace Editor
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/python");
+    editor.setOptions({
+        fontSize: "15px",
+        showPrintMargin: false,
+        highlightActiveLine: true,
+        wrap: true,
+        fontFamily: "'Monaco', 'Courier New', monospace"
     });
-    const data = await resp.json();
 
-    if (data.error) {
-      runStatus.textContent = data.error;
-      runStatus.className = 'small text-danger';
-      return;
-    }
+    // Force Ace to use 4 spaces for indentation
+    editor.session.setOption("useSoftTabs", true);
+    editor.session.setTabSize(4);
 
-    renderResults(data);
-    hasRun = true;
-    submitBtn.disabled = false;
+    // Load initial code
+    var initialCode = document.getElementById('initial-code').textContent;
+    editor.setValue(initialCode);
+    editor.clearSelection();
 
-    if (data.all_passed) {
-      runStatus.innerHTML = '<span class="text-success">&#10003; All test cases passed — ready to submit!</span>';
+    // Position cursor nicely
+    if (initialCode.includes("# Write your solution here")) {
+        editor.gotoLine(2, 5, false); 
     } else {
-      runStatus.innerHTML = `<span class="text-warning">${data.passed_count}/${data.total_count} passed</span>`;
+        editor.gotoLine(1, 0, false);
     }
 
-  } catch(e) {
-    runStatus.textContent = 'Error connecting to server.';
-    runStatus.className = 'small text-danger';
-  } finally {
-    runBtn.disabled = false;
-    runBtn.innerHTML = '<i class="bi bi-play-fill"></i> Run';
-  }
-});
+    // ==========================================
+    // MAKE FIRST 2 LINES READ-ONLY (SIGNATURE)
+    // ==========================================
+    var isProtectedEdit = false;
+    var protectedText = editor.session.getLines(0, 1).join('\n');
 
-submitBtn.addEventListener('click', function() {
-  if (!hasRun) {
-    alert('Please run your code first before submitting.');
-    return;
-  }
-  if (!confirm('Submit this solution? This will be recorded as your submission.')) return;
-  document.getElementById('submit-code-input').value = editor.value;
-  document.getElementById('submit-form').submit();
-});
+    editor.session.on('change', function(e) {
+        if (isProtectedEdit) return;
+        
+        var currentText = editor.session.getLines(0, 1).join('\n');
+        if (currentText !== protectedText) {
+            isProtectedEdit = true;
+            var cursor = editor.getCursorPosition();
+            
+            // Revert lines 0 and 1 back to the protected text
+            var Range = ace.require('ace/range').Range;
+            var line1Length = editor.session.getLine(1).length;
+            editor.session.replace(new Range(0, 0, 1, line1Length), protectedText);
+            
+            // Push cursor out of protected zone if user tried to edit inside it
+            if (cursor.row < 2) {
+                editor.moveCursorTo(2, 0);
+            } else {
+                editor.moveCursorTo(cursor.row, cursor.column);
+            }
+            isProtectedEdit = false;
+        }
+    });
 
-function renderResults(data) {
-  resultsPanel.style.display = 'block';
-  const passColor = data.all_passed ? '#4ec9b0' : '#f14c4c';
-  resultsSummary.innerHTML =
-    `<span style="color:${passColor};">${data.passed_count}/${data.total_count} Test Cases Passed</span>`;
+    // 2. Initialize Split Layout
+    if (typeof Split !== 'undefined') {
+        Split(['#split-left', '#split-right'], {
+            sizes: [45, 55], 
+            minSize: [300, 400], 
+            gutterSize: 6,
+            onDragEnd: function() {
+                editor.resize();
+            }
+        });
+    }
 
-  let html = '<table class="table table-sm mb-0" style="color:#ccc; font-size:13px;">';
-  html += '<thead><tr style="color:#888;">' +
-    '<th style="width:60px">Test</th>' +
-    '<th style="width:70px">Status</th>' +
-    '<th>Input</th>' +
-    '<th>Expected</th>' +
-    '<th>Got</th>' +
-    '<th>Error</th>' +
-    '</tr></thead><tbody>';
+    // Force resize after layout settles
+    setTimeout(function() { editor.resize(); }, 100);
 
-  data.results.forEach(r => {
-    const badge = r.passed
-      ? '<span style="color:#4ec9b0;">&#10003; Pass</span>'
-      : '<span style="color:#f14c4c;">&#10007; Fail</span>';
-    const tcLabel = `TC ${r.tc_number}${r.is_sample ? ' <span style="color:#888;font-size:11px;">(sample)</span>' : ''}`;
-    const input   = escHtml((r.input || '').replace(/\n/g, ', '));
-    const expected = escHtml(r.expected || '');
-    const actual = escHtml(r.actual || '');
-    const error = r.error ? `<span style="color:#f14c4c;">${escHtml(r.error.substring(0,80))}</span>` : '';
+    // 3. Console Slider Logic
+    const consoleWrapper = document.getElementById('console-wrapper');
+    const consoleBody = document.getElementById('results-body');
+    const consoleToggle = document.getElementById('console-toggle');
+    const consoleChevron = document.getElementById('console-chevron');
+    let consoleOpen = false;
 
-    html += `<tr style="border-color:#333;">
-      <td>${tcLabel}</td>
-      <td>${badge}</td>
-      <td><code style="color:#ce9178;">${input}</code></td>
-      <td><code style="color:#9cdcfe;">${expected}</code></td>
-      <td><code style="color:${r.passed ? '#9cdcfe' : '#f14c4c'};">${actual}</code></td>
-      <td>${error}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  resultsBody.innerHTML = html;
-}
+    function openConsole() {
+        consoleWrapper.style.height = '300px'; 
+        consoleBody.classList.add('open');
+        consoleChevron.classList.replace('bi-chevron-up', 'bi-chevron-down'); 
+        consoleOpen = true;
+        editor.resize();
+    }
 
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+    function closeConsole() {
+        consoleWrapper.style.height = '42px'; 
+        consoleBody.classList.remove('open');
+        consoleChevron.classList.replace('bi-chevron-down', 'bi-chevron-up'); 
+        consoleOpen = false;
+        editor.resize();
+    }
+
+    consoleToggle.addEventListener('click', () => consoleOpen ? closeConsole() : openConsole());
+
+    // 4. Run Execution Logic
+    const QUESTION_ID = {{ question.id }};
+    const RUN_URL = "{% url 'run_code' question.id %}";
+    const CSRF = "{{ csrf_token }}";
+    
+    const runBtn = document.getElementById('run-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const runStatus = document.getElementById('run-status');
+    let hasRun = false; 
+
+    runBtn.addEventListener('click', async function() {
+        const code = editor.getValue().trim();
+        if (!code) return;
+
+        runBtn.disabled = true;
+        runBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Running...';
+        runStatus.textContent = ''; 
+        submitBtn.disabled = true;
+        
+        openConsole();
+        consoleBody.innerHTML = '<div class="text-center mt-4"><div class="spinner-border text-secondary"></div><div class="mt-2 text-muted">Judging...</div></div>';
+
+        try {
+            const resp = await fetch(RUN_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                body: JSON.stringify({code: code})
+            });
+            const data = await resp.json();
+
+            if (data.error) {
+                runStatus.innerHTML = '<span class="text-danger fw-bold">Compile Error</span>';
+                consoleBody.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="status-failed">Error</span>
+                        </div>
+                        <div class="result-grid">
+                            <div class="result-line">
+                                <div class="result-key">Message</div>
+                                <div class="result-val text-failed">${escHtml(data.error)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            renderResults(data);
+            hasRun = true; 
+            submitBtn.disabled = false;
+
+            if (data.all_passed) {
+                runStatus.innerHTML = '<span style="color:#4ec9b0; font-weight:600;">Accepted</span>';
+            } else {
+                runStatus.innerHTML = '<span style="color:#f14c4c; font-weight:600;">Wrong Answer</span>';
+            }
+
+        } catch(e) {
+            consoleBody.innerHTML = '<div class="text-danger">Network Error connecting to server.</div>';
+        } finally {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+        }
+    });
+
+    // 5. Submit Execution Logic
+    submitBtn.addEventListener('click', function() {
+        if (!hasRun) return;
+        document.getElementById('submit-code-input').value = editor.getValue();
+        document.getElementById('submit-form').submit();
+    });
+
+    // Clean Result Rendering
+    function renderResults(data) {
+        let summaryClass = data.all_passed ? 'summary-passed' : 'summary-failed';
+        let summaryText = data.all_passed ? 'Accepted' : 'Wrong Answer';
+        
+        let html = `
+        <div class="result-summary ${summaryClass}">
+            <span>${summaryText}</span>
+            <span>${data.passed_count}/${data.total_count} cases passed</span>
+        </div>`;
+
+        data.results.forEach((r, i) => {
+            const statusClass = r.passed ? 'status-passed' : 'status-failed';
+            const statusText = r.passed ? 'Accepted' : 'Failed';
+            const outputClass = r.passed ? '' : 'text-failed';
+            
+            html += `
+            <div class="result-card">
+                <div class="result-card-header">
+                    <span class="${statusClass}">● ${statusText}</span>
+                    <span class="case-num">Case ${i + 1}</span>
+                </div>
+                <div class="result-grid">
+                    <div class="result-line">
+                        <div class="result-key">Input</div>
+                        <div class="result-val">${escHtml(r.input || '')}</div>
+                    </div>
+                    <div class="result-line">
+                        <div class="result-key">Expected</div>
+                        <div class="result-val">${escHtml(r.expected || '')}</div>
+                    </div>
+                    <div class="result-line">
+                        <div class="result-key">Output</div>
+                        <div class="result-val ${outputClass}">${escHtml(r.actual || '')}</div>
+                    </div>
+                    ${r.error ? `
+                    <div class="result-line">
+                        <div class="result-key">Error</div>
+                        <div class="result-val text-failed">${escHtml(r.error)}</div>
+                    </div>` : ''}
+                </div>
+            </div>`;
+        });
+        consoleBody.innerHTML = html;
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 </script>
 {% endblock %}

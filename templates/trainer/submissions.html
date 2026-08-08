@@ -1,60 +1,78 @@
 {% extends 'base.html' %}
+{% comment %} trainer/submissions.html {% endcomment %}
 {% block title %}All Submissions{% endblock %}
 {% block content %}
-<h4><i class="bi bi-code-square"></i> All Student Submissions</h4>
-<form method="get" class="row g-2 mb-3">
-  <div class="col-md-4">
-    <select name="student" class="form-select">
-      <option value="">All Students</option>
-      {% for s in students %}
-      <option value="{{ s.id }}" {% if selected_student == s.id|stringformat:"s" %}selected{% endif %}>
-        {{ s.first_name }} {{ s.last_name }} ({{ s.username }})
-      </option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <select name="day" class="form-select">
-      <option value="">All Days</option>
-      {% for d in days %}
-      <option value="{{ d.id }}" {% if selected_day == d.id|stringformat:"s" %}selected{% endif %}>
-        Day {{ d.day_number }}: {{ d.title }}
-      </option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2">
-    <button type="submit" class="btn btn-dark w-100">Filter</button>
-  </div>
-</form>
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead class="table-dark">
-      <tr><th>Time</th><th>Student</th><th>Question</th><th>Result</th><th>Action</th></tr>
-    </thead>
-    <tbody>
-      {% for sub in submissions %}
-      <tr>
-        <td><small>{{ sub.submitted_at|date:"d M, H:i" }}</small></td>
-        <td>{{ sub.student.first_name }} {{ sub.student.last_name }}</td>
-        <td>Day {{ sub.question.day.day_number }}: {{ sub.question.title }}</td>
-        <td>
-          {% if sub.all_passed %}
-          <span class="badge bg-success">All Passed</span>
-          {% else %}
-          <span class="badge bg-danger">{{ sub.passed_cases }}/{{ sub.total_cases }}</span>
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'trainer_submission_detail' sub.id %}" class="btn btn-sm btn-outline-dark">
-            View Code
-          </a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" class="text-center text-muted py-4">No submissions found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0"><i class="bi bi-code-square me-2"></i>Code Review</h4>
+    <a href="{% url 'trainer_dashboard' %}" class="btn btn-sm btn-light border shadow-sm rounded-pill px-3 fw-medium">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 bg-white p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold text-uppercase">Student</label>
+            <select name="student" class="form-select bg-light border-0">
+                <option value="">All Students</option>
+                {% for s in students %}
+                <option value="{{ s.id }}" {% if selected_student == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.first_name }} {{ s.last_name }} ({{ s.username }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold text-uppercase">Day</label>
+            <select name="day" class="form-select bg-light border-0">
+                <option value="">All Days</option>
+                {% for d in days %}
+                <option value="{{ d.id }}" {% if selected_day == d.id|stringformat:"s" %}selected{% endif %}>
+                    Day {{ d.day_number }}: {{ d.title }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-dark w-100 fw-medium">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card shadow-sm border-0 bg-white overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Time</th>
+                    <th>Student</th>
+                    <th>Problem</th>
+                    <th>Result</th>
+                    <th class="pe-4 text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td class="ps-4 text-muted small">{{ sub.submitted_at|date:"M d, H:i" }}</td>
+                    <td class="fw-medium">{{ sub.student.first_name }} {{ sub.student.last_name }}</td>
+                    <td><span class="text-muted small me-2">D{{ sub.question.day.day_number }}</span> {{ sub.question.title }}</td>
+                    <td>
+                        {% if sub.all_passed %}
+                        <span class="text-success fw-bold small"><i class="bi bi-check-circle-fill"></i> Pass</span>
+                        {% else %}
+                        <span class="text-danger fw-bold small"><i class="bi bi-x-circle-fill"></i> Fail ({{ sub.passed_cases }}/{{ sub.total_cases }})</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4 text-end">
+                        <a href="{% url 'trainer_submission_detail' sub.id %}" class="btn btn-sm btn-light border rounded-pill px-3">Review</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-5">No submissions found matching criteria.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

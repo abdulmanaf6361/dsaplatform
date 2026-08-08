@@ -7,6 +7,9 @@ from questions.signatures import SIGNATURES
 from .models import Submission, TestResult
 from .executor import judge
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_signature_data(question):
     key = (question.day.day_number, question.order)
@@ -27,27 +30,21 @@ def run_code(request, question_id):
     data = json.loads(request.body)
     raw_code = data.get('code', '')
 
-    # Debug: log exactly what was received
-    import logging
-    logger = logging.getLogger(__name__)
     logger.warning("RAW CODE REPR: %r", raw_code[:200])
 
-    student_body = raw_code.replace('\r\n', '\n').replace('\r', '\n').strip()
+    # Strip ALL carriage returns aggressively
+    student_code = raw_code.replace('\r\n', '\n').replace('\r', '\n').strip()
+    logger.warning("CLEAN CODE REPR: %r", student_code[:200])
 
-    logger.warning("CLEAN CODE REPR: %r", student_body[:200])
-
-    if not student_body:
+    if not student_code:
         return JsonResponse({'error': 'No code provided'}, status=400)
 
     sig_data = get_signature_data(question)
-    sig_line = sig_data['signature'].replace('\r', '')
-
-    # Ensure every line of student body is indented with 4 spaces
-    indented_body = '\n'.join(
-        ('    ' + line if line.strip() else line)
-        for line in student_body.split('\n')
-    )
-    full_student_code = sig_line + '\n' + indented_body
+    
+    # FIX: The function signature is now part of the editor code.
+    # We no longer prepend or indent the student code.
+    full_student_code = student_code
+    
     test_cases = list(question.test_cases.all())
     results = judge(full_student_code, sig_data['wrapper'], test_cases)
 
@@ -79,18 +76,18 @@ def submit_code(request, question_id):
     if request.method != 'POST':
         return redirect('question_detail', question_id=question_id)
 
-    student_body = request.POST.get('code', '').replace('\r\n', '\n').replace('\r', '\n').strip()
-    if not student_body:
+    # Strip ALL carriage returns aggressively
+    student_code = request.POST.get('code', '').replace('\r\n', '\n').replace('\r', '\n').strip()
+    if not student_code:
         messages.error(request, 'No code to submit.')
         return redirect('question_detail', question_id=question_id)
 
     sig_data = get_signature_data(question)
-    sig_line = sig_data['signature'].replace('\r', '')
-    indented_body = '\n'.join(
-        ('    ' + line if line.strip() else line)
-        for line in student_body.split('\n')
-    )
-    full_student_code = sig_line + '\n' + indented_body
+    
+    # FIX: The function signature is now part of the editor code.
+    # We no longer prepend or indent the student code.
+    full_student_code = student_code
+    
     test_cases = list(question.test_cases.all())
     results = judge(full_student_code, sig_data['wrapper'], test_cases)
 
@@ -100,7 +97,7 @@ def submit_code(request, question_id):
 
     submission = Submission.objects.create(
         student=request.user, question=question,
-        code=student_body,
+        code=student_code,  # Save the full code (including signature)
         all_passed=all_passed,
         total_cases=total_count,
         passed_cases=passed_count,
