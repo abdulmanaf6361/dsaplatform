@@ -128,9 +128,12 @@
 </li>
 {% endif %}
                     <li class="nav-item ms-3">
-                        <a class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm" href="{% url 'logout' %}">
-                            {{ user.first_name|default:user.username }} <i class="bi bi-box-arrow-right ms-1"></i>
-                        </a>
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm">
+                                {{ user.first_name|default:user.username }} <i class="bi bi-box-arrow-right ms-1"></i>
+                            </button>
+                        </form>
                     </li>
                 {% else %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Sign in</a></li>
