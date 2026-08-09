@@ -2,7 +2,6 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Day, Question
-from questions.signatures import SIGNATURES
 
 @login_required
 def dashboard(request):
@@ -25,27 +24,17 @@ def question_detail(request, question_id):
         messages.warning(request, 'This day is not unlocked yet.')
         return redirect('dashboard')
 
-    key = (question.day.day_number, question.order)
-    sig_data = SIGNATURES.get(key, {"signature": "def solution():", "wrapper": ""})
-    signature_line = sig_data['signature']
-
     sample_cases = question.test_cases.filter(is_sample=True)
     from submissions.models import Submission
     last_submission = Submission.objects.filter(
         student=request.user, question=question
     ).order_by('-submitted_at').first()
 
-    # Pass last submitted body (without signature line)
-    last_code_body = ""
-    if last_submission:
-        body_lines = last_submission.code.split('\n')
-        last_code_body = '\n'.join(body_lines)
-
     return render(request, 'questions/question_detail.html', {
         'question': question,
         'sample_cases': sample_cases,
         'last_submission': last_submission,
-        'last_code_body': last_code_body,
-        'signature_line': signature_line,
+        'last_code_body': last_submission.code if last_submission else '',
+        'signature_line': question.function_signature,
         'total_cases': question.test_cases.count(),
     })

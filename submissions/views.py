@@ -3,24 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from questions.models import Question
-from questions.signatures import SIGNATURES
 from .models import Submission, TestResult
 from .executor import judge
 import json
-import logging
-
-logger = logging.getLogger(__name__)
-
-def get_signature_data(question):
-    key = (question.day.day_number, question.order)
-    return SIGNATURES.get(key, {
-        "signature": "def solution():",
-        "wrapper": "def _run(input_str):\n    return str(solution())\n"
-    })
 
 @login_required
 def run_code(request, question_id):
-    """AJAX endpoint — runs code and returns results without saving."""
     question = get_object_or_404(Question, id=question_id)
     if not question.day.is_unlocked:
         return JsonResponse({'error': 'Day not unlocked'}, status=403)
@@ -28,27 +16,14 @@ def run_code(request, question_id):
         return JsonResponse({'error': 'POST only'}, status=405)
 
     data = json.loads(request.body)
-    raw_code = data.get('code', '')
-
-    logger.warning("RAW CODE REPR: %r", raw_code[:200])
-
-    # Strip ALL carriage returns aggressively
-    student_code = raw_code.replace('\r\n', '\n').replace('\r', '\n').strip()
-    logger.warning("CLEAN CODE REPR: %r", student_code[:200])
-
-    if not student_code:
+    full_code = data.get('code', '').replace('\r\n', '\n').replace('\r', '\n').strip()
+    if not full_code:
         return JsonResponse({'error': 'No code provided'}, status=400)
 
-    sig_data = get_signature_data(question)
-    
-    # FIX: The function signature is now part of the editor code.
-    # We no longer prepend or indent the student code.
-    full_student_code = student_code
-    
     test_cases = list(question.test_cases.all())
-    results = judge(full_student_code, sig_data['wrapper'], test_cases)
-
+    results = judge(full_code, question.wrapper_code, test_cases)
     passed_count = sum(1 for r in results if r['passed'])
+
     return JsonResponse({
         'results': [
             {
@@ -76,20 +51,13 @@ def submit_code(request, question_id):
     if request.method != 'POST':
         return redirect('question_detail', question_id=question_id)
 
-    # Strip ALL carriage returns aggressively
-    student_code = request.POST.get('code', '').replace('\r\n', '\n').replace('\r', '\n').strip()
-    if not student_code:
+    full_code = request.POST.get('code', '').replace('\r\n', '\n').replace('\r', '\n').strip()
+    if not full_code:
         messages.error(request, 'No code to submit.')
         return redirect('question_detail', question_id=question_id)
 
-    sig_data = get_signature_data(question)
-    
-    # FIX: The function signature is now part of the editor code.
-    # We no longer prepend or indent the student code.
-    full_student_code = student_code
-    
     test_cases = list(question.test_cases.all())
-    results = judge(full_student_code, sig_data['wrapper'], test_cases)
+    results = judge(full_code, question.wrapper_code, test_cases)
 
     passed_count = sum(1 for r in results if r['passed'])
     total_count = len(results)
@@ -97,10 +65,8 @@ def submit_code(request, question_id):
 
     submission = Submission.objects.create(
         student=request.user, question=question,
-        code=student_code,  # Save the full code (including signature)
-        all_passed=all_passed,
-        total_cases=total_count,
-        passed_cases=passed_count,
+        code=full_code, all_passed=all_passed,
+        total_cases=total_count, passed_cases=passed_count,
     )
     for r in results:
         TestResult.objects.create(

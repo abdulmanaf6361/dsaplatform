@@ -24,6 +24,9 @@ class Question(models.Model):
     sample_input = models.TextField(blank=True)
     sample_output = models.TextField(blank=True)
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='easy')
+    # Signature and wrapper stored in DB — editable from admin
+    function_signature = models.CharField(max_length=200, blank=True)
+    wrapper_code = models.TextField(blank=True)
 
     class Meta:
         ordering = ['day', 'order']
@@ -35,7 +38,7 @@ class TestCase(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='test_cases')
     input_data = models.TextField()
     expected_output = models.TextField()
-    is_sample = models.BooleanField(default=False)  # True = visible to student
+    is_sample = models.BooleanField(default=False)
     order = models.IntegerField(default=1)
 
     class Meta:

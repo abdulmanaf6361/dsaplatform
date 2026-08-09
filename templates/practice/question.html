@@ -188,10 +188,11 @@
 </div>
 
 <!-- Initial code seed -->
-<script type="text/plain" id="initial-code">{% if last_code_body %}{{ signature_line }}
-{{ last_code_body }}{% else %}{{ signature_line }}
+{% autoescape off %}
+<script type="text/plain" id="initial-code">{% if last_code_body %}{{ last_code_body }}{% else %}{{ signature_line }}
     # Write your solution here
     return{% endif %}</script>
+{% endautoescape %}
 
 <!-- Submit form -->
 <form id="submit-form" method="post" action="{% url 'practice_submit' question.id %}" style="display:none;">

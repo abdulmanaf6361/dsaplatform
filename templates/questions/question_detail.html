@@ -188,9 +188,11 @@
 </div>
 
 <!-- Hidden initial code -->
+{% autoescape off %}
 <script type="text/plain" id="initial-code">{% if last_code_body %}{{ last_code_body }}{% else %}{{ signature_line }}
     # Write your solution here
     return{% endif %}</script>
+{% endautoescape %}
 
 <!-- Hidden submit form -->
 <form id="submit-form" method="post" action="{% url 'submit_code' question.id %}" style="display:none;">
