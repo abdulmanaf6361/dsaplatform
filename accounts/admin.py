@@ -1,6 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User
+from .models import Batch, User
+
+
+@admin.register(Batch)
+class BatchAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
+
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
