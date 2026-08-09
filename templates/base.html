@@ -106,8 +106,27 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'practice_dashboard' %}">Practice</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'leaderboard' %}">Leaderboard</a></li>
                     {% if user.is_staff %}
-                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="{% url 'trainer_dashboard' %}">Trainer Panel</a></li>
-                    {% endif %}
+<li class="nav-item dropdown">
+  <a class="nav-link text-warning fw-bold dropdown-toggle" href="#" data-bs-toggle="dropdown">
+    Trainer Panel
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="{% url 'trainer_dashboard' %}">
+      <i class="bi bi-gear me-2"></i>Main Panel</a></li>
+    <li><a class="dropdown-item" href="{% url 'trainer_practice_dashboard' %}">
+      <i class="bi bi-journal-code me-2"></i>Practice Panel</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="{% url 'student_progress' %}">
+      <i class="bi bi-bar-chart me-2"></i>Student Progress</a></li>
+    <li><a class="dropdown-item" href="{% url 'trainer_practice_progress' %}">
+      <i class="bi bi-bar-chart-fill me-2"></i>Practice Progress</a></li>
+    <li><a class="dropdown-item" href="{% url 'trainer_submissions' %}">
+      <i class="bi bi-code-square me-2"></i>All Submissions</a></li>
+    <li><a class="dropdown-item" href="{% url 'trainer_practice_submissions' %}">
+      <i class="bi bi-code-slash me-2"></i>Practice Submissions</a></li>
+  </ul>
+</li>
+{% endif %}
                     <li class="nav-item ms-3">
                         <a class="btn btn-light btn-sm rounded-pill px-3 border shadow-sm" href="{% url 'logout' %}">
                             {{ user.first_name|default:user.username }} <i class="bi bi-box-arrow-right ms-1"></i>
