@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'submissions',
     'leaderboard',
     'trainer',
+    'practice',
 ]
 
 MIDDLEWARE = [

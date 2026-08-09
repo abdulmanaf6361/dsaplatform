@@ -8,5 +8,6 @@ urlpatterns = [
     path('submissions/', include('submissions.urls')),
     path('leaderboard/', include('leaderboard.urls')),
     path('trainer/', include('trainer.urls')),
+    path('practice/', include('practice.urls')),
     path('', include('questions.urls')),
 ]

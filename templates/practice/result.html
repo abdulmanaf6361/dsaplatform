@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Practice Result{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card shadow-sm">
+      <div class="card-header {% if submission.all_passed %}bg-success{% else %}bg-danger{% endif %} text-white rounded-top">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            {% if submission.all_passed %}
+            <i class="bi bi-check-circle-fill"></i> Accepted — All {{ submission.total_cases }} Passed
+            {% else %}
+            <i class="bi bi-x-circle-fill"></i> {{ submission.passed_cases }}/{{ submission.total_cases }} Passed
+            {% endif %}
+          </h5>
+          <small>{{ submission.submitted_at|date:"d M Y, H:i" }}</small>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3 small">Practice · Day {{ submission.question.day.day_number }} · {{ submission.question.title }}</p>
+        <h6 class="mb-3 fw-semibold">Test Case Results</h6>
+        <div class="table-responsive mb-4">
+          <table class="table table-bordered table-sm align-middle">
+            <thead class="table-dark">
+              <tr><th>#</th><th>Status</th><th>Input</th><th>Expected</th><th>Got</th><th>Error</th></tr>
+            </thead>
+            <tbody>
+              {% for r in results %}
+              <tr class="{% if r.passed %}table-success{% else %}table-danger{% endif %}">
+                <td>TC {{ forloop.counter }}{% if r.test_case.is_sample %} <span class="badge bg-secondary" style="font-size:10px;">sample</span>{% endif %}</td>
+                <td>{% if r.passed %}<span class="text-success fw-bold">&#10003;</span>{% else %}<span class="text-danger fw-bold">&#10007;</span>{% endif %}</td>
+                <td><code>{{ r.test_case.input_data|truncatechars:50 }}</code></td>
+                <td><code>{{ r.test_case.expected_output }}</code></td>
+                <td><code>{{ r.actual_output|default:"—" }}</code></td>
+                <td><small class="text-danger">{{ r.error|default:"" }}</small></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <h6 class="fw-semibold">Your Code</h6>
+        <pre class="bg-dark text-light p-3 rounded" style="font-size:13px;">{{ submission.code }}</pre>
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <a href="{% url 'practice_question' submission.question.id %}" class="btn btn-dark btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left"></i> Back
+          </a>
+          <a href="{% url 'practice_my_submissions' submission.question.id %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-clock-history"></i> All Submissions
+          </a>
+          <a href="{% url 'practice_dashboard' %}" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+            Practice Home
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

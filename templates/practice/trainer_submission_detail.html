@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Practice Submission Detail{% endblock %}
+{% block content %}
+<a href="{% url 'trainer_practice_submissions' %}" class="btn btn-sm btn-outline-dark rounded-pill mb-3">
+  <i class="bi bi-arrow-left"></i> Back
+</a>
+<div class="card shadow-sm">
+  <div class="card-header bg-dark text-white">
+    <strong>{{ submission.student.first_name }} {{ submission.student.last_name }}</strong>
+    &mdash; {{ submission.question.title }}
+    <span class="float-end small">{{ submission.submitted_at|date:"d M Y, H:i" }}</span>
+  </div>
+  <div class="card-body">
+    <p class="mb-3">
+      {% if submission.all_passed %}
+      <span class="badge bg-success">All {{ submission.total_cases }} passed</span>
+      {% else %}
+      <span class="badge bg-danger">{{ submission.passed_cases }}/{{ submission.total_cases }} passed</span>
+      {% endif %}
+    </p>
+    <div class="table-responsive mb-4">
+      <table class="table table-bordered table-sm">
+        <thead class="table-dark">
+          <tr><th>Test</th><th>Status</th><th>Input</th><th>Expected</th><th>Got</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr>
+            <td>TC {{ forloop.counter }}</td>
+            <td>{% if r.passed %}<span class="text-success">&#10003;</span>{% else %}<span class="text-danger">&#10007;</span>{% endif %}</td>
+            <td><code>{{ r.test_case.input_data|truncatechars:40 }}</code></td>
+            <td><code>{{ r.test_case.expected_output }}</code></td>
+            <td><code>{{ r.actual_output|default:"—" }}</code></td>
+            <td><small class="text-danger">{{ r.error|default:"" }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h6>Submitted Code</h6>
+    <pre class="bg-dark text-light p-3 rounded" style="font-size:13px;">{{ submission.code }}</pre>
+  </div>
+</div>
+{% endblock %}

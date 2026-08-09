@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% comment %} practice/question.html {% endcomment %}
+{% block title %}{{ question.title }} - Practice{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { 
+        overflow: hidden; 
+        background-color: #f8f9fa; 
+    }
+    .alert { margin-bottom: 0; }
+
+    #workspace-wrapper {
+        position: fixed;
+        top: 60px; 
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: row;
+        z-index: 100;
+    }
+
+    .gutter { 
+        background-color: #e9ecef; 
+        cursor: col-resize; 
+        transition: background-color 0.2s;
+        border-left: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+    }
+    .gutter:hover { background-color: #00b8a3; }
+
+    .panel-left { 
+        overflow-y: auto; 
+        padding: 32px; 
+        height: 100%;
+        background: #ffffff;
+    }
+    
+    .panel-right { 
+        background: #1e1e1e; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100%; 
+        overflow: hidden; 
+    }
+
+    .nav-tabs .nav-link { color: #6c757d; border: none; font-weight: 500; padding: 0.5rem 1rem; border-bottom: 2px solid transparent; }
+    .nav-tabs .nav-link.active { color: #000; border-bottom: 2px solid #000; background: transparent; }
+    .problem-prose { font-size: 0.95rem; line-height: 1.7; color: #333; margin-top: 1.5rem; }
+    .example-box { 
+        background: #fafafa; 
+        border: 1px solid #eee; 
+        border-radius: 6px; 
+        padding: 12px 16px; 
+        margin-bottom: 16px; 
+        font-family: 'Menlo', monospace;
+        font-size: 0.9rem;
+    }
+    .example-box pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; color: #333; }
+    
+    .editor-toolbar { background: #252526; border-bottom: 1px solid #333; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .btn-run { background: transparent; color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 6px 16px; font-size: 0.85rem; transition: all 0.2s; }
+    .btn-run:hover { background: #333; color: #fff; border-color: #555; }
+    .btn-submit { background: #00b8a3; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+    .btn-submit:hover { background: #009c8a; color: #fff; }
+    .btn-submit:disabled { background: #005f57; color: #88c7bf; }
+
+    #editor {
+        flex-grow: 1;
+        flex-shrink: 1;
+        min-height: 0;          
+        width: 100%;
+        font-size: 16px;
+        position: relative;     
+    }
+
+    .console-panel { background: #1e1e1e; border-top: 1px solid #333; display: flex; flex-direction: column; transition: height 0.2s; z-index: 10; flex-shrink: 0; }
+    .console-header { padding: 10px 16px; background: #252526; font-size: 0.85rem; font-weight: 600; color: #ccc; display: flex; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #333; }
+    .console-body { flex-grow: 1; overflow-y: auto; padding: 16px; color: #d4d4d4; font-family: 'Menlo', monospace; font-size: 0.85rem; display: none; }
+    .console-body.open { display: block; }
+
+    .result-summary { padding: 12px; border-radius: 6px; margin-bottom: 16px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+    .summary-passed { background: rgba(78, 201, 176, 0.1); color: #4ec9b0; border: 1px solid rgba(78, 201, 176, 0.2); }
+    .summary-failed { background: rgba(241, 76, 76, 0.1); color: #f14c4c; border: 1px solid rgba(241, 76, 76, 0.2); }
+
+    .result-card { background: #252526; border: 1px solid #333; border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+    .result-card-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: #2d2d2d; border-bottom: 1px solid #333; font-size: 0.85rem; }
+    .status-passed { color: #4ec9b0; font-weight: 600; }
+    .status-failed { color: #f14c4c; font-weight: 600; }
+    .case-num { color: #858585; }
+    
+    .result-grid { padding: 12px 16px; }
+    .result-line { display: flex; margin-bottom: 8px; font-family: 'Menlo', monospace; font-size: 0.85rem; }
+    .result-line:last-child { margin-bottom: 0; }
+    .result-key { width: 80px; color: #858585; flex-shrink: 0; padding-top: 2px; }
+    .result-val { color: #d4d4d4; flex-grow: 1; white-space: pre-wrap; word-break: break-all; background: #1e1e1e; padding: 4px 8px; border-radius: 4px; border: 1px solid #333; }
+    .text-failed { color: #f14c4c; }
+
+    /* Practice badge */
+    .badge-practice { background: rgba(99,102,241,0.15); color: #6366f1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="workspace-wrapper">
+
+    <!-- LEFT PANEL -->
+    <div id="split-left" class="panel-left">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link active" href="#"><i class="bi bi-file-text me-1"></i> Description</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'practice_my_submissions' question.id %}">
+                    <i class="bi bi-clock-history me-1"></i> Submissions
+                </a>
+            </li>
+        </ul>
+
+        <h4 class="fw-bold">{{ question.order }}. {{ question.title }}</h4>
+        <div class="d-flex align-items-center gap-3 mt-2 mb-4 flex-wrap">
+            <span class="badge
+                {% if question.difficulty == 'easy' %}badge-easy
+                {% else %}badge-medium{% endif %}">
+                {{ question.get_difficulty_display|title }}
+            </span>
+            <span class="badge badge-practice">Practice</span>
+            <span class="text-muted small">Day {{ question.day.day_number }}</span>
+            <a href="{% url 'practice_dashboard' %}" class="text-muted small text-decoration-none ms-auto">
+                <i class="bi bi-arrow-left"></i> Practice Home
+            </a>
+        </div>
+
+        <div class="problem-prose">
+            {{ question.description|linebreaks }}
+        </div>
+
+        {% if sample_cases %}
+        <div class="mt-4">
+            {% for tc in sample_cases %}
+            <p class="fw-bold mb-2 small text-muted text-uppercase">Example {{ forloop.counter }}:</p>
+            <div class="example-box">
+                <div class="mb-2"><strong class="text-secondary">Input:</strong> <code>{{ tc.input_data }}</code></div>
+                <div><strong class="text-secondary">Output:</strong> <pre class="mt-1 mb-0">{{ tc.expected_output }}</pre></div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if question.constraints %}
+        <div class="mt-4">
+            <p class="fw-bold mb-2 small text-muted text-uppercase">Constraints:</p>
+            <ul class="text-muted small bg-light p-3 rounded" style="font-family: monospace;">
+                <li>{{ question.constraints }}</li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="split-right" class="panel-right">
+
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+            <div><span class="badge bg-secondary">Python 3</span></div>
+            <div class="d-flex align-items-center gap-2">
+                <span id="run-status" class="small me-2"></span>
+                <button id="run-btn" class="btn-run"><i class="bi bi-play-fill"></i> Run</button>
+                <button id="submit-btn" class="btn-submit" disabled><i class="bi bi-cloud-arrow-up-fill"></i> Submit</button>
+            </div>
+        </div>
+
+        <!-- ACE Editor -->
+        <div id="editor"></div>
+
+        <!-- Console -->
+        <div class="console-panel" id="console-wrapper" style="height: 42px;">
+            <div class="console-header" id="console-toggle">
+                <span><i class="bi bi-terminal me-2"></i> Testcase Console</span>
+                <i class="bi bi-chevron-up" id="console-chevron"></i>
+            </div>
+            <div class="console-body" id="results-body">
+                <div class="text-muted">Run your code to see test results here.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Initial code seed -->
+<script type="text/plain" id="initial-code">{% if last_code_body %}{{ signature_line }}
+{{ last_code_body }}{% else %}{{ signature_line }}
+    # Write your solution here
+    return{% endif %}</script>
+
+<!-- Submit form -->
+<form id="submit-form" method="post" action="{% url 'practice_submit' question.id %}" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="code" id="submit-code-input">
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+
+<script>
+    // 1. Initialize Ace Editor
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/python");
+    editor.setOptions({
+        fontSize: "15px",
+        showPrintMargin: false,
+        highlightActiveLine: true,
+        wrap: true,
+        fontFamily: "'Monaco', 'Courier New', monospace"
+    });
+    editor.session.setOption("useSoftTabs", true);
+    editor.session.setTabSize(4);
+
+    var initialCode = document.getElementById('initial-code').textContent;
+    editor.setValue(initialCode);
+    editor.clearSelection();
+
+    if (initialCode.includes("# Write your solution here")) {
+        editor.gotoLine(2, 5, false);
+    } else {
+        editor.gotoLine(1, 0, false);
+    }
+
+    // 2. Read-only signature protection (first 2 lines)
+    var isProtectedEdit = false;
+    var protectedText = editor.session.getLines(0, 1).join('\n');
+
+    editor.session.on('change', function(e) {
+        if (isProtectedEdit) return;
+        var currentText = editor.session.getLines(0, 1).join('\n');
+        if (currentText !== protectedText) {
+            isProtectedEdit = true;
+            var cursor = editor.getCursorPosition();
+            var Range = ace.require('ace/range').Range;
+            var line1Length = editor.session.getLine(1) ? editor.session.getLine(1).length : 0;
+            editor.session.replace(new Range(0, 0, 1, line1Length), protectedText);
+            if (cursor.row < 2) {
+                editor.moveCursorTo(2, 0);
+            } else {
+                editor.moveCursorTo(cursor.row, cursor.column);
+            }
+            isProtectedEdit = false;
+        }
+    });
+
+    // 3. Split layout
+    if (typeof Split !== 'undefined') {
+        Split(['#split-left', '#split-right'], {
+            sizes: [45, 55],
+            minSize: [300, 400],
+            gutterSize: 6,
+            onDragEnd: function() { editor.resize(); }
+        });
+    }
+    setTimeout(function() { editor.resize(); }, 100);
+
+    // 4. Console toggle
+    const consoleWrapper = document.getElementById('console-wrapper');
+    const consoleBody = document.getElementById('results-body');
+    const consoleToggle = document.getElementById('console-toggle');
+    const consoleChevron = document.getElementById('console-chevron');
+    let consoleOpen = false;
+
+    function openConsole() {
+        consoleWrapper.style.height = '300px';
+        consoleBody.classList.add('open');
+        consoleChevron.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        consoleOpen = true;
+        editor.resize();
+    }
+
+    function closeConsole() {
+        consoleWrapper.style.height = '42px';
+        consoleBody.classList.remove('open');
+        consoleChevron.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        consoleOpen = false;
+        editor.resize();
+    }
+
+    consoleToggle.addEventListener('click', () => consoleOpen ? closeConsole() : openConsole());
+
+    // 5. Run logic
+    const RUN_URL = "{% url 'practice_run' question.id %}";
+    const CSRF = "{{ csrf_token }}";
+    const runBtn = document.getElementById('run-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const runStatus = document.getElementById('run-status');
+    let hasRun = false;
+
+    runBtn.addEventListener('click', async function() {
+        const code = editor.getValue().trim();
+        if (!code) return;
+
+        runBtn.disabled = true;
+        runBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Running...';
+        runStatus.textContent = '';
+        submitBtn.disabled = true;
+
+        openConsole();
+        consoleBody.innerHTML = '<div class="text-center mt-4"><div class="spinner-border text-secondary"></div><div class="mt-2 text-muted">Judging...</div></div>';
+
+        try {
+            const resp = await fetch(RUN_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF},
+                body: JSON.stringify({code: code})
+            });
+            const data = await resp.json();
+
+            if (data.error) {
+                runStatus.innerHTML = '<span class="text-danger fw-bold">Error</span>';
+                consoleBody.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="status-failed">Error</span>
+                        </div>
+                        <div class="result-grid">
+                            <div class="result-line">
+                                <div class="result-key">Message</div>
+                                <div class="result-val text-failed">${escHtml(data.error)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            renderResults(data);
+            hasRun = true;
+            submitBtn.disabled = false;
+
+            if (data.all_passed) {
+                runStatus.innerHTML = '<span style="color:#4ec9b0; font-weight:600;">Accepted</span>';
+            } else {
+                runStatus.innerHTML = '<span style="color:#f14c4c; font-weight:600;">Wrong Answer</span>';
+            }
+
+        } catch(e) {
+            consoleBody.innerHTML = '<div class="text-danger">Network Error connecting to server.</div>';
+        } finally {
+            runBtn.disabled = false;
+            runBtn.innerHTML = '<i class="bi bi-play-fill"></i> Run';
+        }
+    });
+
+    // 6. Submit logic
+    submitBtn.addEventListener('click', function() {
+        if (!hasRun) return;
+        document.getElementById('submit-code-input').value = editor.getValue();
+        document.getElementById('submit-form').submit();
+    });
+
+    // 7. Render results
+    function renderResults(data) {
+        let summaryClass = data.all_passed ? 'summary-passed' : 'summary-failed';
+        let summaryText = data.all_passed ? 'Accepted' : 'Wrong Answer';
+
+        let html = `
+        <div class="result-summary ${summaryClass}">
+            <span>${summaryText}</span>
+            <span>${data.passed_count}/${data.total_count} cases passed</span>
+        </div>`;
+
+        data.results.forEach((r, i) => {
+            const statusClass = r.passed ? 'status-passed' : 'status-failed';
+            const statusText = r.passed ? 'Accepted' : 'Failed';
+            const outputClass = r.passed ? '' : 'text-failed';
+
+            html += `
+            <div class="result-card">
+                <div class="result-card-header">
+                    <span class="${statusClass}">● ${statusText}</span>
+                    <span class="case-num">Case ${i + 1}</span>
+                </div>
+                <div class="result-grid">
+                    <div class="result-line">
+                        <div class="result-key">Input</div>
+                        <div class="result-val">${escHtml(r.input || '')}</div>
+                    </div>
+                    <div class="result-line">
+                        <div class="result-key">Expected</div>
+                        <div class="result-val">${escHtml(r.expected || '')}</div>
+                    </div>
+                    <div class="result-line">
+                        <div class="result-key">Output</div>
+                        <div class="result-val ${outputClass}">${escHtml(r.actual || '')}</div>
+                    </div>
+                    ${r.error ? `
+                    <div class="result-line">
+                        <div class="result-key">Error</div>
+                        <div class="result-val text-failed">${escHtml(r.error)}</div>
+                    </div>` : ''}
+                </div>
+            </div>`;
+        });
+
+        consoleBody.innerHTML = html;
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+</script>
+{% endblock %}

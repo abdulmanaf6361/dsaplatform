@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Practice Progress{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="fw-bold mb-0">Student Practice Progress</h5>
+  <a href="{% url 'trainer_practice_dashboard' %}" class="btn btn-sm btn-outline-dark rounded-pill">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-dark">
+      <tr><th>Rank</th><th>Student</th><th>Batch</th><th>Solved</th><th>Attempted</th><th>Progress</th></tr>
+    </thead>
+    <tbody>
+      {% for entry in data %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>
+          {{ entry.student.first_name }} {{ entry.student.last_name }}<br>
+          <small class="text-muted">{{ entry.student.username }}</small>
+        </td>
+        <td><small>{{ entry.student.batch_name }}</small></td>
+        <td><strong class="text-success">{{ entry.passed }}</strong>/350</td>
+        <td><span class="text-warning">{{ entry.attempted }}</span></td>
+        <td style="width:180px;">
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar bg-success" style="width:{% widthratio entry.passed 350 100 %}%"></div>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center text-muted py-4">No students yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -9,7 +9,7 @@
 
 <div class="row g-3 mb-5">
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-white h-100 p-3">
+        <a href="{% url 'student_progress' %}" class="card shadow-sm border-0 bg-white h-100 p-3 text-decoration-none text-dark d-block w-100">
             <div class="d-flex align-items-center">
                 <div class="bg-light rounded p-3 me-3 text-dark fs-4"><i class="bi bi-people-fill"></i></div>
                 <div>
@@ -17,10 +17,10 @@
                     <p class="text-muted small text-uppercase fw-bold mb-0">Students</p>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <div class="card shadow-sm border-0 bg-white h-100 p-3">
+        <a href="{% url 'trainer_submissions' %}" class="card shadow-sm border-0 bg-white h-100 p-3 text-decoration-none text-dark d-block w-100">
             <div class="d-flex align-items-center">
                 <div class="bg-light rounded p-3 me-3 text-dark fs-4"><i class="bi bi-cloud-arrow-up-fill"></i></div>
                 <div>
@@ -28,10 +28,10 @@
                     <p class="text-muted small text-uppercase fw-bold mb-0">Submissions</p>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-md-3">
-        <a href="{% url 'trainer_submissions' %}" class="card shadow-sm border-0 bg-dark text-white text-decoration-none h-100 p-3 transition-hover">
+        <a href="{% url 'trainer_submissions' %}" class="card shadow-sm border-0 bg-dark text-white text-decoration-none h-100 p-3 transition-hover d-block w-100">
             <div class="d-flex align-items-center h-100">
                 <div class="fs-2 me-3"><i class="bi bi-code-square"></i></div>
                 <div><h6 class="fw-bold mb-0">View All Code</h6><small class="opacity-75">Review student logic</small></div>
@@ -39,12 +39,20 @@
         </a>
     </div>
     <div class="col-md-3">
-        <a href="{% url 'student_progress' %}" class="card shadow-sm border-0 bg-light text-dark text-decoration-none h-100 p-3 border">
-            <div class="d-flex align-items-center h-100">
-                <div class="fs-2 me-3"><i class="bi bi-bar-chart-fill text-dark"></i></div>
-                <div><h6 class="fw-bold mb-0">Student Progress</h6><small class="text-muted">Rankings & Stats</small></div>
-            </div>
-        </a>
+        <div class="d-grid gap-3 h-100">
+            <a href="{% url 'trainer_practice_dashboard' %}" class="card shadow-sm border-0 bg-light text-dark text-decoration-none h-100 p-3 border d-block w-100">
+                <div class="d-flex align-items-center h-100">
+                    <div class="fs-2 me-3"><i class="bi bi-clipboard-data text-dark"></i></div>
+                    <div><h6 class="fw-bold mb-0">Practice Panel</h6><small class="text-muted">Manage practice sessions</small></div>
+                </div>
+            </a>
+            <a href="{% url 'student_progress' %}" class="card shadow-sm border-0 bg-light text-dark text-decoration-none h-100 p-3 border d-block w-100">
+                <div class="d-flex align-items-center h-100">
+                    <div class="fs-2 me-3"><i class="bi bi-bar-chart-fill text-dark"></i></div>
+                    <div><h6 class="fw-bold mb-0">Student Progress</h6><small class="text-muted">Rankings & Stats</small></div>
+                </div>
+            </a>
+        </div>
     </div>
 </div>
 
