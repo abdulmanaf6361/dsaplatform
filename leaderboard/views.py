@@ -7,8 +7,17 @@ from questions.models import Day
 
 @login_required
 def leaderboard(request):
-    # Get all non-trainer students
+    from accounts.models import Batch
     students = User.objects.filter(is_trainer=False, is_superuser=False)
+    
+    selected_batch = request.GET.get('batch')
+    batches = Batch.objects.all()
+    
+    if not (request.user.is_trainer or request.user.is_superuser):
+        selected_batch = request.user.batch_name
+        
+    if selected_batch:
+        students = students.filter(batch_name=selected_batch)
 
     board = []
     for student in students:
@@ -30,4 +39,6 @@ def leaderboard(request):
     return render(request, 'leaderboard/leaderboard.html', {
         'board': board,
         'total_questions': total_questions,
+        'batches': batches,
+        'selected_batch': selected_batch,
     })

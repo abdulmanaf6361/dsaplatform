@@ -12,9 +12,13 @@ class PracticeQuestionInline(admin.TabularInline):
 
 @admin.register(PracticeDay)
 class PracticeDayAdmin(admin.ModelAdmin):
-    list_display = ['day_number', 'title', 'is_unlocked']
-    list_editable = ['is_unlocked']
+    list_display = ['day_number', 'title', 'get_unlocked_batches']
     inlines = [PracticeQuestionInline]
+    filter_horizontal = ('unlocked_batches',)
+
+    def get_unlocked_batches(self, obj):
+        return ", ".join([b.name for b in obj.unlocked_batches.all()])
+    get_unlocked_batches.short_description = 'Unlocked Batches'
 
 @admin.register(PracticeQuestion)
 class PracticeQuestionAdmin(admin.ModelAdmin):

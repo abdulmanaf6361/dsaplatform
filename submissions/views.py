@@ -10,7 +10,7 @@ import json
 @login_required
 def run_code(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    if not question.day.is_unlocked:
+    if not question.day.unlocked_batches.filter(name=request.user.batch_name).exists():
         return JsonResponse({'error': 'Day not unlocked'}, status=403)
     if request.method != 'POST':
         return JsonResponse({'error': 'POST only'}, status=405)
@@ -45,7 +45,7 @@ def run_code(request, question_id):
 @login_required
 def submit_code(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    if not question.day.is_unlocked:
+    if not question.day.unlocked_batches.filter(name=request.user.batch_name).exists():
         messages.warning(request, 'This day is not unlocked yet.')
         return redirect('dashboard')
     if request.method != 'POST':

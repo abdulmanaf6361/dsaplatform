@@ -2,9 +2,21 @@
 {% comment %} leaderboard/leaderboard.html {% endcomment %}
 {% block title %}Leaderboard - DSA with Python{% endblock %}
 {% block content %}
-<div class="mb-4 text-center mt-2">
-    <h3 class="fw-bold"><i class="bi bi-trophy-fill text-warning me-2"></i>Global Leaderboard</h3>
-    <p class="text-muted">Compete with your batchmates. Total problems: {{ total_questions }}</p>
+<div class="mb-4 d-flex justify-content-between align-items-center mt-2">
+    <div>
+        <h3 class="fw-bold"><i class="bi bi-trophy-fill text-warning me-2"></i>{% if selected_batch %}{{ selected_batch }} Leaderboard{% else %}Global Leaderboard{% endif %}</h3>
+        <p class="text-muted">Compete with your batchmates. Total problems: {{ total_questions }}</p>
+    </div>
+    {% if user.is_trainer or user.is_superuser %}
+    <form method="get" class="d-flex gap-2">
+        <select name="batch" class="form-select form-select-sm shadow-sm" onchange="this.form.submit()">
+            <option value="">All Batches</option>
+            {% for batch in batches %}
+            <option value="{{ batch.name }}" {% if selected_batch == batch.name %}selected{% endif %}>{{ batch.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    {% endif %}
 </div>
 
 <div class="card shadow-sm border-0 bg-white">

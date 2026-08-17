@@ -79,20 +79,29 @@
                     </td>
                     <td class="text-center"><span class="badge bg-light text-dark border">{{ day.questions.count }}</span></td>
                     <td>
-                        {% if day.is_unlocked %}
-                        <span class="text-success fw-medium small"><i class="bi bi-unlock-fill me-1"></i> Unlocked</span>
-                        {% else %}
-                        <span class="text-muted fw-medium small"><i class="bi bi-lock-fill me-1"></i> Locked</span>
-                        {% endif %}
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for batch in batches %}
+                                {% if batch in day.unlocked_batches.all %}
+                                    <span class="badge bg-success"><i class="bi bi-unlock-fill"></i> {{ batch.name }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> {{ batch.name }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
                     </td>
                     <td class="pe-4 text-end">
-                        <form method="post" action="{% url 'toggle_day' day.id %}" class="m-0">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm rounded-pill px-3 fw-medium
-                                {% if day.is_unlocked %}btn-light text-danger border{% else %}btn-dark{% endif %}">
-                                {% if day.is_unlocked %}Lock{% else %}Unlock{% endif %}
-                            </button>
-                        </form>
+                        <div class="d-flex flex-wrap gap-1 justify-content-end">
+                            {% for batch in batches %}
+                                <form method="post" action="{% url 'toggle_day' day.id batch.id %}" class="m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm rounded-pill px-2 py-0 border
+                                        {% if batch in day.unlocked_batches.all %}btn-light text-danger{% else %}btn-outline-dark{% endif %}"
+                                        style="font-size: 0.75rem;">
+                                        {% if batch in day.unlocked_batches.all %}Lock{% else %}Unlock{% endif %} {{ batch.name }}
+                                    </button>
+                                </form>
+                            {% endfor %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

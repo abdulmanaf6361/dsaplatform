@@ -45,20 +45,29 @@
         <td><small class="text-muted">{{ day.topics }}</small></td>
         <td>{{ day.questions.count }}</td>
         <td>
-          {% if day.is_unlocked %}
-          <span class="badge bg-success rounded-pill">Unlocked</span>
-          {% else %}
-          <span class="badge bg-secondary rounded-pill">Locked</span>
-          {% endif %}
+          <div class="d-flex flex-wrap gap-1">
+            {% for batch in batches %}
+              {% if batch in day.unlocked_batches.all %}
+                <span class="badge bg-success rounded-pill"><i class="bi bi-unlock-fill"></i> {{ batch.name }}</span>
+              {% else %}
+                <span class="badge bg-secondary rounded-pill"><i class="bi bi-lock-fill"></i> {{ batch.name }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
         </td>
         <td>
-          <form method="post" action="{% url 'trainer_toggle_practice_day' day.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm rounded-pill
-              {% if day.is_unlocked %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
-              {% if day.is_unlocked %}Lock{% else %}Unlock{% endif %}
-            </button>
-          </form>
+          <div class="d-flex flex-wrap gap-1">
+            {% for batch in batches %}
+              <form method="post" action="{% url 'trainer_toggle_practice_day' day.id batch.id %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm rounded-pill
+                  {% if batch in day.unlocked_batches.all %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                  style="font-size: 0.75rem; padding: 2px 8px;">
+                  {% if batch in day.unlocked_batches.all %}Lock{% else %}Unlock{% endif %} {{ batch.name }}
+                </button>
+              </form>
+            {% endfor %}
+          </div>
         </td>
       </tr>
       {% endfor %}
