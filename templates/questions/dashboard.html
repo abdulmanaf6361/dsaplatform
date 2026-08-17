@@ -16,14 +16,14 @@
 
 <div class="card overflow-hidden shadow-sm border-0 bg-white">
     {% for day in days %}
-    <div class="border-bottom {% if not day.is_unlocked %}locked-day bg-light{% endif %}">
+    <div class="border-bottom {% if day.id not in unlocked_day_ids %}locked-day bg-light{% endif %}">
         <div class="px-4 py-3 bg-light d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#day-{{ day.id }}" style="cursor:pointer;">
             <div class="d-flex align-items-center gap-3">
                 <h6 class="mb-0 fw-bold">Day {{ day.day_number }}: {{ day.title }}</h6>
                 <span class="text-muted small">{{ day.topics }}</span>
             </div>
             <div>
-                {% if not day.is_unlocked %}
+                {% if day.id not in unlocked_day_ids %}
                     <i class="bi bi-lock-fill text-muted"></i>
                 {% else %}
                     <i class="bi bi-chevron-down text-muted"></i>

@@ -7,6 +7,18 @@
     <i class="bi bi-arrow-left"></i> Back
   </a>
 </div>
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <select name="batch" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Batches</option>
+      {% for b in batches %}
+      <option value="{{ b.name }}" {% if selected_batch == b.name %}selected{% endif %}>
+        {{ b.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
 <div class="table-responsive">
   <table class="table table-hover align-middle">
     <thead class="table-dark">

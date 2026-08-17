@@ -5,8 +5,16 @@ from .models import Day, Question
 
 @login_required
 def dashboard(request):
-    days = Day.objects.prefetch_related('questions').all()
+    days = Day.objects.prefetch_related('questions', 'unlocked_batches').all()
     from submissions.models import Submission
+    from django.db import models
+    
+    unlocked_day_ids = set(
+        Day.objects.filter(
+            unlocked_batches__name=request.user.batch_name
+        ).values_list('id', flat=True)
+    )
+    
     passed_question_ids = set(
         Submission.objects.filter(
             student=request.user, all_passed=True
@@ -15,12 +23,13 @@ def dashboard(request):
     return render(request, 'questions/dashboard.html', {
         'days': days,
         'passed_question_ids': passed_question_ids,
+        'unlocked_day_ids': unlocked_day_ids,
     })
 
 @login_required
 def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    if not question.day.is_unlocked:
+    if not question.day.unlocked_batches.filter(name=request.user.batch_name).exists():
         messages.warning(request, 'This day is not unlocked yet.')
         return redirect('dashboard')
 

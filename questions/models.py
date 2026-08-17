@@ -4,7 +4,7 @@ class Day(models.Model):
     day_number = models.IntegerField(unique=True)
     title = models.CharField(max_length=200)
     topics = models.TextField(help_text='Topics covered this day')
-    is_unlocked = models.BooleanField(default=False)
+    unlocked_batches = models.ManyToManyField('accounts.Batch', blank=True)
 
     class Meta:
         ordering = ['day_number']

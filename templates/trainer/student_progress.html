@@ -9,6 +9,22 @@
     </a>
 </div>
 
+<div class="card shadow-sm border-0 bg-white p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-muted small fw-bold text-uppercase">Batch</label>
+            <select name="batch" class="form-select bg-light border-0" onchange="this.form.submit()">
+                <option value="">All Batches</option>
+                {% for b in batches %}
+                <option value="{{ b.name }}" {% if selected_batch == b.name %}selected{% endif %}>
+                    {{ b.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
 <div class="card shadow-sm border-0 bg-white">
     <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">

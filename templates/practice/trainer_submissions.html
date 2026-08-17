@@ -8,7 +8,17 @@
   </a>
 </div>
 <form method="get" class="row g-2 mb-3">
-  <div class="col-md-4">
+  <div class="col-md-3">
+    <select name="batch" class="form-select form-select-sm">
+      <option value="">All Batches</option>
+      {% for b in batches %}
+      <option value="{{ b.name }}" {% if selected_batch == b.name %}selected{% endif %}>
+        {{ b.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
     <select name="student" class="form-select form-select-sm">
       <option value="">All Students</option>
       {% for s in students %}
